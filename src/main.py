@@ -16,16 +16,16 @@ def run_environment():
     n_actions = env.action_space.n
 
     agent = DQNAgent(
-        memory_size=1000000,       # Adjust as needed
+        memory_size=10000,       # Adjust as needed
         state_dimensions=state_dimensions,
         n_actions=n_actions,
         learning_rate=0.000025,    # Tunable
         gamma=0.99,
         epsilon_start=1.0,
-        epsilon_min=0.1,
-        epsilon_decay=0.99901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+        epsilon_min=0.01,
+        epsilon_decay=0.999901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
         batch_size=32,
-        target_update_frequency=10000 # Or based on episodes/steps
+        target_update_frequency=200 # Or based on episodes/steps
     )
 
     print(f"Using deviiice: {agent.device}")
