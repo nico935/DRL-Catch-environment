@@ -29,7 +29,7 @@ def run_environment():
     )
 
     print(f"Using device: {agent.device}")
-    print(f"State dimensions: {state_dimensions}")
+    print(f"State dimensionnns: {state_dimensions}")
     print(f"Number of actions: {n_actions}")
 
 
