@@ -23,7 +23,7 @@ def run_environment():
         gamma=0.99,
         epsilon_start=1.0,
         epsilon_min=0.1,
-        epsilon_decay=0.9999991,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+        epsilon_decay=0.99901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
         batch_size=32,
         target_update_frequency=10000 # Or based on episodes/steps
     )
