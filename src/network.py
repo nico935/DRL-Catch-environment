@@ -7,27 +7,18 @@ from typing import Tuple
 class NeuralNetwork(nn.Module):
     def __init__(
         self,
-        input_dims: Tuple[int, int, int], # (height, width, channels) e.g. (84, 84, 4)
-        n_actions: int                    # e.g. 3
+        input_dims: Tuple[int, int, int], #  (84, 84, 4)
+        n_actions: int                   
     ):   
         super(NeuralNetwork, self).__init__()
-        self.input_dims = input_dims # Should be (channels, height, width) for PyTorch
+        self.input_dims = input_dims
         self.n_actions = n_actions
 
-        # PyTorch expects channels first: (C, H, W)
-        # The environment provides (H, W, C)
-        # We will handle the permutation in the agent or forward pass
-
-        # Example CNN architecture (adjust as needed)
-        # Input: (Batch_size, 4, 84, 84)
-        self.conv1 = nn.Conv2d(input_dims[2], 32, kernel_size=8, stride=4) # input_dims[2] is number of channels (fps) 84
-        # Output conv1: ((84-8)/4 + 1) = 20 -> (Batch_size, 32, 20, 20)
+        self.conv1 = nn.Conv2d(input_dims[2], 32, kernel_size=8, stride=4) 
 
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        # Output conv2: ((20-4)/2 + 1) = 9 -> (Batch_size, 64, 9, 9)
 
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        # Output conv3: ((9-3)/1 + 1) = 7 -> (Batch_size, 64, 7, 7)
 
         # Flatten the output of conv3 to feed into fully connected layers
         # Calculate the flattened size: 64 * 7 * 7

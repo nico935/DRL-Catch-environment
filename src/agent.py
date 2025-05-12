@@ -30,10 +30,10 @@ class Agent():
 
         self.memory_size = memory_size
         self.state_buffer = np.zeros((self.memory_size, *state_dimensions), dtype=np.float32)
-        self.new_state_buffer = np.zeros((self.memory_size, *state_dimensions), dtype=np.float32)
+        self.next_state_buffer = np.zeros((self.memory_size, *state_dimensions), dtype=np.float32)
         self.action_buffer = np.zeros(self.memory_size, dtype=np.int32)
         self.reward_buffer = np.zeros(self.memory_size, dtype=np.float32)
-        self.terminal_buffer = np.zeros(self.memory_size, dtype=bool)    #what is this buffer for?
+        self.terminal_buffer = np.zeros(self.memory_size, dtype=bool)    #buffer for whether terminal (ball dropped to depth 17, should take 12 steps)
         self.mem_counter = 0
         self.n_actions = n_actions
 
@@ -41,17 +41,17 @@ class Agent():
     def store_transition(
         self,
         state: np.ndarray,
-        action: int, # Is this always an int?
+        action: int, # Is this always an int? 
         reward: float,
         new_state: np.ndarray,
         done: bool
     ) -> None:
         
-        index = self.mem_counter % self.memory_size # Overwrite old memories if full
+        index = self.mem_counter % self.memory_size # modulus to overwrite old transitions
         self.state_buffer[index] = state
         self.action_buffer[index] = action
         self.reward_buffer[index] = reward
-        self.new_state_buffer[index] = new_state
+        self.next_state_buffer[index] = new_state
         self.terminal_buffer[index] = done
         self.mem_counter += 1
         """!
@@ -97,15 +97,15 @@ class DQNAgent(Agent):
     def __init__(
         self,
         memory_size: int,
-        state_dimensions: Tuple[int, int, int], # (height, width, channels)
+        state_dimensions: Tuple[int, int, int], # (height, width, fps)
         n_actions: int,
-        learning_rate: float = 0.001,
-        gamma: float = 0.99,        # Discount factor
-        epsilon_start: float = 1.0, # Exploration rate
+        learning_rate: float = 0.001, # Learning rate for Adam optimizer
+        gamma: float = 0.99,        # Q update discounting
+        epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
         epsilon_min: float = 0.01,
-        epsilon_decay: float = 0.996,
+        epsilon_decay: float = 0.996,  
         batch_size: int = 32,
-        target_update_frequency: int = 1000 # How often to update target network, bigger then 
+        target_update_frequency: int = 1000 # How often to update target network
     ):
         super(DQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
 
@@ -118,82 +118,91 @@ class DQNAgent(Agent):
         self.target_update_frequency = target_update_frequency  
         self.learn_step_counter = 0 # For target network updates
 
-        # Assuming input_dims for NeuralNetwork is (H, W, C) for consistency with buffers
-        self.q_eval_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)
+        # Input_dims for NeuralNetwork is (84, 84, FPS) 
+        self.q_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)
         self.q_target_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
-        self.q_target_network.load_state_dict(self.q_eval_network.state_dict()) # Initialize target with eval weights
-        self.q_target_network.eval() # Target network is not trained directly
+        self.q_target_network.load_state_dict(self.q_network.state_dict()) # Initialize target with eval weights with parameter tensor state_dict
+        self.q_target_network.eval() # Put target network in eval mode
 
-        self.optimizer = optim.Adam(self.q_eval_network.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
         self.loss_fn = nn.MSELoss()
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.q_eval_network.to(self.device)
+        self.q_network.to(self.device)
         self.q_target_network.to(self.device)   #why do we need to move the target network to the device?
+
+
     def choose_action(self, observation: np.ndarray) -> int:
+        ''' choose action, 
+        input state (84,84,4) from environment 
+        output action
+        
+        '''
+
+
+        # with chance epsilon we explore
         if np.random.rand() <= self.epsilon:
             return np.random.choice(self.n_actions)
+        
+        # else we exploit
         else:
-            # Convert observation to PyTorch tensor, add batch dimension, and send to device
-            # Observation is (H, W, C) from environment
+            # Convert observation to PyTorch tensor and add batch dimension in first dim with unsqueeze(0)
+            # Neural net excpects input of shape (batch_size, channels, height, width)
             state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(self.device)
-            # Network expects (Batch, C, H, W) after permutation inside its forward method
-            # Or if your observation is already (C, H, W) then just unsqueeze(0)
 
-            self.q_eval_network.eval() # Set network to evaluation mode
-            with torch.no_grad(): # No need to calculate gradients for action selection, WHY?
-                q_values = self.q_eval_network(state) # state should be (1, H, W, C)
-            self.q_eval_network.train() # Set network back to train mode
+            self.q_network.eval() # Set q network to evaluation mode
+            with torch.no_grad(): 
+                q_values = self.q_network(state) #comput q values for current state
+            self.q_network.train() # Set network back to train mode
 
-            return torch.argmax(q_values).item()  #explain dont understnad why we have torch for nax
+            return torch.argmax(q_values).item() 
+        
+
     # Inside DQNAgent class
     def learn(self) -> None:
         if self.mem_counter < self.batch_size: # Not enough samples yet
-            return  #why return? 
+            return  
 
-        self.optimizer.zero_grad() # Zero gradients before calculating loss, what is this for?
+        self.optimizer.zero_grad() # Reset gradients before backpropagation
 
-        # Sample a mini-batch from memory
+        # Sample a mini-batch from memory, consider case memory is not full yet
         max_mem = min(self.mem_counter, self.memory_size)
-        batch_indices = np.random.choice(max_mem, self.batch_size, replace=False)
+
+        # pick batch_size number of random indices without replacement
+        batch_indices = np.random.choice(max_mem, self.batch_size, replace=False)  
 
         states_batch = torch.tensor(self.state_buffer[batch_indices], dtype=torch.float32).to(self.device)
         actions_batch = torch.tensor(self.action_buffer[batch_indices], dtype=torch.long).to(self.device) # .long() for indexing
         rewards_batch = torch.tensor(self.reward_buffer[batch_indices], dtype=torch.float32).to(self.device)
-        new_states_batch = torch.tensor(self.new_state_buffer[batch_indices], dtype=torch.float32).to(self.device)
+        new_states_batch = torch.tensor(self.next_state_buffer[batch_indices], dtype=torch.float32).to(self.device)
         terminal_batch = torch.tensor(self.terminal_buffer[batch_indices], dtype=torch.bool).to(self.device)
 
-        # States_batch and new_states_batch are (batch_size, H, W, C)
-        # The network's forward pass handles permutation to (batch_size, C, H, W)
+        q_eval = self.q_network(states_batch) # Shape: (batch_size, n_actions)
 
-        # 1. Get Q-values for current states from q_eval_network
-        #    We need the Q-values for the actions that were actually taken.
-        q_eval = self.q_eval_network(states_batch) # Shape: (batch_size, n_actions)
         # Gather Q-values corresponding to the actions taken
-        # actions_batch needs to be (batch_size, 1) for gather
-        q_eval_actions_taken = q_eval.gather(1, actions_batch.unsqueeze(1)).squeeze(1) # Shape: (batch_size)
+        q_eval_actions_taken = q_eval.gather(1, actions_batch.unsqueeze(1)).squeeze(1) 
 
 
-        # 2. Get Q-values for next states from q_target_network
+        # Get Q-values for next states from q_target_network
         q_next = self.q_target_network(new_states_batch) # Shape: (batch_size, n_actions)
         q_next[terminal_batch] = 0.0 # Q-value of terminal state is 0
 
-        # 3. Calculate target Q-values
-        #    For DQN, target is R + gamma * max_a'(Q_target(s', a'))
+        # Calculate target Q-values
+        #  For DQN, target is R + gamma * max_a'(Q_target(s', a'))
         q_target = rewards_batch + self.gamma * torch.max(q_next, dim=1)[0] # [0] to get values from (values, indices) tuple
 
-        # 4. Calculate loss
+        # Calculate loss
         loss = self.loss_fn(q_eval_actions_taken, q_target)
 
-        # 5. Backpropagate
+        # Backpropagate
         loss.backward()
         self.optimizer.step()
 
         self.learn_step_counter += 1
 
-        # 6. Update target network periodically
+        # If we reached the target update frequency, update the target network
         if self.learn_step_counter % self.target_update_frequency == 0:
-            self.q_target_network.load_state_dict(self.q_eval_network.state_dict())
+            self.q_target_network.load_state_dict(self.q_network.state_dict())
 
-        # 7. Epsilon decay
+        # Epsilon decay
         self.epsilon = self.epsilon * self.epsilon_decay if self.epsilon > self.epsilon_min else self.epsilon_min
