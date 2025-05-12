@@ -160,7 +160,7 @@ class DQNAgent(Agent):
 
     # Inside DQNAgent class
     def learn(self) -> None:
-        if self.mem_counter < self.batch_size: # Not enough samples yet
+        if self.mem_counter < 1000: # Not enough samples yet
             return  
 
         self.optimizer.zero_grad() # Reset gradients before backpropagation
