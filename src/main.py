@@ -1,32 +1,46 @@
 from environment import CatchEnv
-from agent import DQNAgent 
+from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 N_EPISODES = 10000
-
+DDQN=True
+DQN=False
 def run_environment():
-    """!
-    Run the environment with a random agent.
-    Make sure to adapt this to train your own implementation.
-    """
+    
     env = CatchEnv()
     # state_dimensions: (height, width, channels) as per environment.py's obs_shape
     # obs_shape from env is (H, W, C) which is (84, 84, 4)
     state_dimensions = env.observation_space.shape
     n_actions = env.action_space.n
-
-    agent = DQNAgent(
-        memory_size=10000,       # Adjust as needed
-        state_dimensions=state_dimensions,
-        n_actions=n_actions,
-        learning_rate=0.001,    # Tunable
-        gamma=0.99,
-        epsilon_start=1.0,
-        epsilon_min=0.0001,
-        epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
-        batch_size=32,
-        target_update_frequency=200 # Or based on episodes/steps
-    )
+    if DQN==True:
+        agent = DQNAgent(
+            memory_size=10000,       # Adjust as needed
+            state_dimensions=state_dimensions,
+            n_actions=n_actions,
+            learning_rate=0.001,    # Tunable
+            gamma=0.99,
+            epsilon_start=1.0,
+            epsilon_min=0.0001,
+            epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+            batch_size=32,
+            target_update_frequency=200 # Or based on episodes/steps
+        )
+    if DDQN==True:
+        agent = DDQNAgent(
+            memory_size=10000,       # Adjust as needed
+            state_dimensions=state_dimensions,
+            n_actions=n_actions,
+            learning_rate=0.001,    # Tunable
+            gamma=0.99,
+            epsilon_start=1.0,
+            epsilon_min=0.0001,
+            epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+            batch_size=32,
+            t_weight_start=0.2,
+            t_weight_min=0.0,
+            t_weight_decay=1.0,
+        )
+    print(f"DQN {DQN}, DDQN {DDQN}")
     print(f"learning rate: {agent.lr}")
     print(f"Using deviiice: {agent.device}")
     print(f"State dimensionnns: {state_dimensions}")
@@ -57,9 +71,9 @@ def run_environment():
 
         scores.append(score)
         eps_history.append(agent.epsilon)
-        avg_score = np.mean(scores[-100:]) # Moving average of last 100 scores
-
-        print(f"episode {ep} | score: {score:.2f} | moving average reward: {avg_score:.2f} | epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
+        run_avg_score = np.mean(scores[-100:]) # Moving average of last 100 scores
+        avg_score=np.mean(scores) #total average reward
+        print(f"episode {ep} | score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
 
 
 
