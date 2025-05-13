@@ -103,7 +103,7 @@ class DQNAgent(Agent):
         gamma: float = 0.99,        # Q update discounting
         epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
         epsilon_min: float = 0.0001,
-        epsilon_decay: float = 0.996,  
+        epsilon_decay: float = 0.9986,  
         batch_size: int = 32,
         target_update_frequency: int = 1000 # How often to update target network
     ):
