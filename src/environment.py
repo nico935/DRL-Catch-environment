@@ -30,7 +30,7 @@ class CatchEnv(gym.Env):
         self.ballx, self.bally = self.np_random.integers(self.size), 4 #random ball horizontal pos, depth 4
         self.image[self.bally, self.ballx] = 1     #ball pos is filled w 1
         self.image[-5, self.pos - 2 : self.pos + 3] = np.ones(5) #paddle area from [pos-2,pos+2], paddle is at depth 17
-        return self.step(2)[0]
+        return self.step(2)[0]  #we return the first frame of the first step with no action
 
     def reset(self, **kwargs):
         super().reset(**kwargs)

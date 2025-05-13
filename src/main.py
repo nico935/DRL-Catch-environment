@@ -19,15 +19,15 @@ def run_environment():
         memory_size=10000,       # Adjust as needed
         state_dimensions=state_dimensions,
         n_actions=n_actions,
-        learning_rate=0.000025,    # Tunable
+        learning_rate=0.001,    # Tunable
         gamma=0.99,
         epsilon_start=1.0,
-        epsilon_min=0.01,
-        epsilon_decay=0.999901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+        epsilon_min=0.0001,
+        epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
         batch_size=32,
         target_update_frequency=200 # Or based on episodes/steps
     )
-
+    print(f"learning rate: {learning_rate}")
     print(f"Using deviiice: {agent.device}")
     print(f"State dimensionnns: {state_dimensions}")
     print(f"Number of actions: {n_actions}")

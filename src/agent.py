@@ -99,11 +99,11 @@ class DQNAgent(Agent):
         memory_size: int,
         state_dimensions: Tuple[int, int, int], # (height, width, fps)
         n_actions: int,
-        learning_rate: float = 0.001, # Learning rate for Adam optimizer
+        learning_rate: float = 0.00001, # Learning rate for Adam optimizer
         gamma: float = 0.99,        # Q update discounting
         epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
         epsilon_min: float = 0.0001,
-        epsilon_decay: float = 0.9986,  
+        epsilon_decay: float = 0.986,  
         batch_size: int = 32,
         target_update_frequency: int = 1000 # How often to update target network
     ):
