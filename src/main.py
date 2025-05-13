@@ -27,7 +27,7 @@ def run_environment():
         batch_size=32,
         target_update_frequency=200 # Or based on episodes/steps
     )
-    print(f"learning rate: {learning_rate}")
+    print(f"learning rate: {agent.lr}")
     print(f"Using deviiice: {agent.device}")
     print(f"State dimensionnns: {state_dimensions}")
     print(f"Number of actions: {n_actions}")
