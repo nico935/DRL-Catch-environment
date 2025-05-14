@@ -103,7 +103,7 @@ def run_environment(seed_value):
             print(f"episode {ep} | score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
     result_data = {
         "seed": seed_value,
-        "raw_scores": current_run_scores, # current_run_scores collected in the loop
+        "raw_scores": current_run_score, # current_run_scores collected in the loop
         "moving_average_scores": current_run_moving_avg # current_run_moving_avg collected
     }
     # Save data for this seed
