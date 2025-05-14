@@ -23,7 +23,7 @@ def run_environment():
             epsilon_min=0.0001,
             epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
             batch_size=32,
-            target_update_frequency=200 # Or based on episodes/steps
+            target_update_frequency=200 
         )
     if DDQN==True:
         agent = DDQNAgent(
@@ -36,9 +36,11 @@ def run_environment():
             epsilon_min=0.0001,
             epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
             batch_size=32,
-            t_weight_start=0.2,
-            t_weight_min=0.0,
-            t_weight_decay=1.0,
+            t_weight_start=0.005,
+            t_weight_min=0.00001,
+            t_weight_decay=0.999,
+            target_update_frequency=200,
+            soft_update=False,
         )
     print(f"DQN {DQN}, DDQN {DDQN}")
     print(f"learning rate: {agent.lr}")

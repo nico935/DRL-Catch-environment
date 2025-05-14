@@ -222,6 +222,8 @@ class DDQNAgent(Agent):
         t_weight_min: float = 0.0,
         t_weight_decay: float = 0.986,
         batch_size: int = 32,
+        target_update_frequency: int = 100,
+        soft_update: bool = True
             ):
         super(DDQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
 
@@ -234,6 +236,9 @@ class DDQNAgent(Agent):
         self.t_weight_min = t_weight_min
         self.t_weight_decay = t_weight_decay
         self.batch_size = batch_size
+        self.target_update_frequency = target_update_frequency
+        self.learn_step_counter = 0 # For target network updates
+        self.soft_update = soft_update
 
 
         # Input_dims for NeuralNetwork is (84, 84, FPS) 
@@ -299,11 +304,12 @@ class DDQNAgent(Agent):
         q_action_taken = q_s.gather(1, actions_batch.unsqueeze(1)).squeeze(1) 
 
 
-        target_q_s_next= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
-        target_actions_batch= torch.argmax(target_q_s_next,dim=1)
-
         q_snext= self.q_network(new_states_batch) # next state q values
-        q_action_target= q_snext.gather(1, target_actions_batch.unsqueeze(1)).squeeze(1) 
+        q_actions_batch= torch.argmax(q_snext,dim=1) #argmac actions in next state
+
+        target_q_snext= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
+
+        q_action_target= target_q_snext.gather(1, q_actions_batch.unsqueeze(1)).squeeze(1) 
 
         target = rewards_batch + self.gamma*q_action_target # [0] to get values from (values, indices) tuple
 
@@ -313,11 +319,15 @@ class DDQNAgent(Agent):
         # Backpropagate
         loss.backward()
         self.optimizer.step()
-
+        self.learn_step_counter += 1
         # If we reached the target update frequency, update the target network
         # Update the parameters of the target network as a weighted sum
-        for target_param, param in zip(self.q_target_network.parameters(), self.q_network.parameters()):
-            target_param.data.copy_(self.t_weight * target_param.data + (1 - self.t_weight) * param.data)
-        # Epsilon decay
-        self.epsilon = self.epsilon * self.epsilon_decay if self.epsilon > self.epsilon_min else self.epsilon_min
-        #self.t_weight = self.t_weight * self.t_weight_decay if self.t_weight > self.t_weight_min else self.t_weight_min
+        if self.learn_step_counter % self.target_update_frequency == 0:
+            if soft_update == True:
+                for target_param, param in zip(self.q_target_network.parameters(), self.q_network.parameters()):
+                    target_param.data.copy_(self.t_weight * param.data + (1 - self.t_weight) * target_param.data)
+            else:
+                self.q_target_network.load_state_dict(self.q_network.state_dict())
+            # Epsilon decay
+        self.epsilon = max(self.epsilon * self.epsilon_decay,self.epsilon_min)
+        #self.t_weight = max(self.t_weight * self.t_weight_decay, self.t_weight_min)
