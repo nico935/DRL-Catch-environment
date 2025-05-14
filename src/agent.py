@@ -323,7 +323,7 @@ class DDQNAgent(Agent):
         # If we reached the target update frequency, update the target network
         # Update the parameters of the target network as a weighted sum
         if self.learn_step_counter % self.target_update_frequency == 0:
-            if soft_update == True:
+            if self.soft_update == True:
                 for target_param, param in zip(self.q_target_network.parameters(), self.q_network.parameters()):
                     target_param.data.copy_(self.t_weight * param.data + (1 - self.t_weight) * target_param.data)
             else:
