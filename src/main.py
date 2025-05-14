@@ -30,7 +30,7 @@ def run_environment():
             memory_size=10000,       # Adjust as needed
             state_dimensions=state_dimensions,
             n_actions=n_actions,
-            learning_rate=0.001,    # Tunable
+            learning_rate=0.00025,    # Tunable
             gamma=0.99,
             epsilon_start=1.0,
             epsilon_min=0.0001,
@@ -39,7 +39,7 @@ def run_environment():
             t_weight_start=0.005,
             t_weight_min=0.00001,
             t_weight_decay=0.999,
-            target_update_frequency=200,
+            target_update_frequency=2000,
             soft_update=False,
         )
     print(f"DQN {DQN}, DDQN {DDQN}")
