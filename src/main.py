@@ -104,7 +104,7 @@ def run_environment(seed_value):
     result_data = {
         "seed": seed_value,
         "raw_scores": current_run_score, # current_run_scores collected in the loop
-        "moving_average_scores": current_run_moving_avg # current_run_moving_avg collected
+        "moving_average_scores": current_run_moving_average # current_run_moving_avg collected
     }
     # Save data for this seed
     filepath = os.path.join(RESULTS_DIR, f"results_seed_{seed_value}.json")
