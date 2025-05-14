@@ -71,9 +71,9 @@ def run_environment(seed_value):
     
     for ep in range(N_EPISODES):
         if ep == 0:
-            observation = env.reset(seed=seed_value)
+            observation, info = env.reset(seed=seed_value)
         else:
-            observation = env.reset()
+            observation,info = env.reset()
         terminated = False
         truncated = False # Gymnasium uses terminated and truncated
         score = 0
