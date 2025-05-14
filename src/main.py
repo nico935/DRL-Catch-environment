@@ -11,8 +11,8 @@ if not os.path.exists(RESULTS_DIR):
     os.makedirs(RESULTS_DIR)
 
 N_EPISODES = 4000
-DDQN=True
-DQN=False
+DDQN=False
+DQN=True
 SEEDS= [42, 123, 789, 101, 555]
 all_runs_scores = []
 all_runs_moving_averages = []
@@ -31,13 +31,13 @@ def run_environment(seed_value):
             memory_size=10000,       # Adjust as needed
             state_dimensions=state_dimensions,
             n_actions=n_actions,
-            learning_rate=0.001,    # Tunable
+            learning_rate=0.00025,    # Tunable
             gamma=0.99,
             epsilon_start=1.0,
             epsilon_min=0.0001,
-            epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+            epsilon_decay=0.999901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
             batch_size=32,
-            target_update_frequency=200 
+            target_update_frequency=2000 
         )
     if DDQN==True:
         agent = DDQNAgent(
