@@ -34,7 +34,7 @@ def run_environment():
             gamma=0.99,
             epsilon_start=1.0,
             epsilon_min=0.0001,
-            epsilon_decay=0.99801,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
+            epsilon_decay=0.999901,     # Results in epsilon ~0.01 after ~1000 learn steps if learn called each step
             batch_size=32,
             t_weight_start=0.005,
             t_weight_min=0.00001,
