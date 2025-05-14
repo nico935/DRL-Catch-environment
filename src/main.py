@@ -3,11 +3,17 @@ from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import os # For saving results
+import json # For saving data like lists
 
-N_EPISODES = 3000
+RESULTS_DIR = "catch_double_dqn_results"
+if not os.path.exists(RESULTS_DIR):
+    os.makedirs(RESULTS_DIR)
+
+N_EPISODES = 4000
 DDQN=True
 DQN=False
-SEEDS = [42, 123, 789, 101, 555]
+SEEDS= [42, 123, 789, 101, 555]
 all_runs_scores = []
 all_runs_moving_averages = []
 
@@ -95,6 +101,16 @@ def run_environment(seed_value):
         current_run_moving_average.append(run_avg_score)
         if (ep + 1) % 50 == 0:
             print(f"episode {ep} | score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
+    result_data = {
+        "seed": seed_value,
+        "raw_scores": current_run_scores, # current_run_scores collected in the loop
+        "moving_average_scores": current_run_moving_avg # current_run_moving_avg collected
+    }
+    # Save data for this seed
+    filepath = os.path.join(RESULTS_DIR, f"results_seed_{seed_value}.json")
+    with open(filepath, 'w') as f:
+        json.dump(result_data, f)
+    print(f"Results for seed {seed_value} saved to {filepath}")
     return current_run_score, current_run_moving_average
 
 if __name__ == "__main__":
