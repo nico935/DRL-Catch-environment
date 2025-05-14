@@ -130,8 +130,7 @@ class DQNAgent(Agent):
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.q_network.to(self.device)
-        self.q_target_network.to(self.device)   #why do we need to move the target network to the device?
-
+        self.q_target_network.to(self.device)   
 
     def choose_action(self, observation: np.ndarray) -> int:
         ''' choose action, 
@@ -159,7 +158,6 @@ class DQNAgent(Agent):
             return torch.argmax(q_values).item() 
         
 
-    # Inside DQNAgent class
     def learn(self) -> None:
         if self.mem_counter < 7000: # Not enough samples yet
             return  
@@ -223,7 +221,7 @@ class DDQNAgent(Agent):
         t_weight_decay: float = 0.986,
         batch_size: int = 32,
         target_update_frequency: int = 100,
-        soft_update: bool = True
+        soft_update: bool = True   #whether to use soft update or hard update
             ):
         super(DDQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
 
@@ -241,7 +239,6 @@ class DDQNAgent(Agent):
         self.soft_update = soft_update
 
 
-        # Input_dims for NeuralNetwork is (84, 84, FPS) 
         self.q_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)
         self.q_target_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
         self.q_target_network.eval() # Put target network in eval mode
@@ -251,7 +248,7 @@ class DDQNAgent(Agent):
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.q_network.to(self.device)
-        self.q_target_network.to(self.device)   #why do we need to move the target network to the device?
+        self.q_target_network.to(self.device)   
 
 
     def choose_action(self, observation: np.ndarray) -> int:
@@ -280,7 +277,6 @@ class DDQNAgent(Agent):
             return torch.argmax(q_values).item() 
         
 
-    # Inside DQNAgent class
     def learn(self) -> None:
         if self.mem_counter < 5000: # Not enough samples yet
             return  
@@ -305,10 +301,13 @@ class DDQNAgent(Agent):
 
 
         q_snext= self.q_network(new_states_batch) # next state q values
+        q_snext[terminal_batch] = 0.0 # Q-value of terminal state is 0
         q_actions_batch= torch.argmax(q_snext,dim=1) #argmac actions in next state
 
         target_q_snext= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
+        target_q_snext[terminal_batch] = 0.0 
 
+        # action target for double dqn
         q_action_target= target_q_snext.gather(1, q_actions_batch.unsqueeze(1)).squeeze(1) 
 
         target = rewards_batch + self.gamma*q_action_target # [0] to get values from (values, indices) tuple
@@ -320,14 +319,15 @@ class DDQNAgent(Agent):
         loss.backward()
         self.optimizer.step()
         self.learn_step_counter += 1
+
         # If we reached the target update frequency, update the target network
-        # Update the parameters of the target network as a weighted sum
         if self.learn_step_counter % self.target_update_frequency == 0:
+            # soft update
             if self.soft_update == True:
                 for target_param, param in zip(self.q_target_network.parameters(), self.q_network.parameters()):
                     target_param.data.copy_(self.t_weight * param.data + (1 - self.t_weight) * target_param.data)
+            # hard update
             else:
                 self.q_target_network.load_state_dict(self.q_network.state_dict())
             # Epsilon decay
         self.epsilon = max(self.epsilon * self.epsilon_decay,self.epsilon_min)
-        #self.t_weight = max(self.t_weight * self.t_weight_decay, self.t_weight_min)
