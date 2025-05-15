@@ -1,0 +1,21 @@
+{
+    "experiment_name": "DQN_Big_network_Experiment1",
+    "agent_type": "DQN",
+    "network_architecture": "NeuralNetwork",
+    "n_episodes": 4500,
+    "seeds": [42, 123, 789, 101, 555],
+    "common_agent_params": {
+        "memory_size": 10000,
+        "gamma": 0.99,
+        "epsilon_start": 1.0,
+        "epsilon_min": 0.001,
+        "batch_size": 32,
+        "epsilon_decay": 0.9998016,
+        "learning_rate": 0.00025,
+        "target_update_frequency": 2000
+    },
+    "dqn_specific_params": {
+        "t_weight_start": 0.005,
+        "soft_update": false
+    }
+}
