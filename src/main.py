@@ -144,12 +144,16 @@ if __name__ == "__main__":
     #                  mean_ma_scores + 2 * std_ma_scores,
     #                  alpha=0.1, label='Mean +/- 2 Std Dev')
 
-    plt.title(f'DDQN Performance on Catch Game (Avg over {len(SEEDS)} seeds)')
+    plt.title(f'{AGENT_TYPE} Perforcmance on Catch Game (Average over {len(SEEDS)} seeds)')
     plt.xlabel('Episode')
     plt.ylabel('100-Episode Moving Average Reward')
     plt.legend()
     plt.grid(True)
-    plt.ylim(0, 1.05) 
-    plt.savefig('dqn_catch_performance.png')
-    plt.show()
+    plot_filename = f"{AGENT_TYPE if 'AGENT_TYPE' in locals() else 'performance'}_catch_plot.png"
+    save_plot_path = os.path.join(RESULTS_DIR, plot_filename)
+    if os.path.exists(saved_plot_path):
+        display(Image(filename=saved_plot_path))
+    else:
+        print(f"Plot image not found at: {saved_plot_path}")
+
 
