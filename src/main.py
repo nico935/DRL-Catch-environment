@@ -76,10 +76,10 @@ def run_environment(seed_value):
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
     #for reproducibility, slows down
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed_value) 
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+    # if torch.cuda.is_available():
+    #     torch.cuda.manual_seed_all(seed_value) 
+    #     torch.backends.cudnn.deterministic = True
+    #     torch.backends.cudnn.benchmark = False
 
     env = CatchEnv()
     state_dimensions = env.observation_space.shape
