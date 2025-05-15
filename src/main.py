@@ -126,6 +126,8 @@ def run_environment(seed_value):
     return current_run_score, current_run_moving_average
 
 if __name__ == "__main__":
+    import time
+    timestamp = time.strftime("%M%S")
     for seed in SEEDS:
         raw_scores, moving_avg_scores = run_environment(seed)
         all_runs_scores.append(raw_scores)
