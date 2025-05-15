@@ -2,7 +2,7 @@
     "experiment_name": "DQN_Big_network_Experiment1",
     "agent_type": "DQN",
     "network_architecture": "NeuralNetwork",
-    "n_episodes": 1000,
+    "n_episodes": 700,
     "seeds": [42, 123],
     "common_agent_params": {
         "memory_size": 10000,

@@ -252,11 +252,11 @@ if __name__ == "__main__":
     # Ensure x-axis matches if cumulative rewards have different length than MA scores due to padding
     # For this simplified version, we assume episodes_axis derived from MA scores is sufficient.
     # If mean_cumulative_rewards has a different length, you might need a separate x_axis for it or ensure alignment.
-    line2, = ax1.plot(episodes_axis[:len(mean_cumulative_rewards)], mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
-    ax1.fill_between(episodes_axis[:len(mean_cumulative_rewards)], 
-                     mean_cumulative_rewards - std_cumulative_rewards, 
-                     mean_cumulative_rewards + std_cumulative_rewards, 
-                     alpha=0.2, color=color_cum)
+    # line2, = ax1.plot(episodes_axis[:len(mean_cumulative_rewards)], mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
+    # ax1.fill_between(episodes_axis[:len(mean_cumulative_rewards)], 
+    #                  mean_cumulative_rewards - std_cumulative_rewards, 
+    #                  mean_cumulative_rewards + std_cumulative_rewards, 
+    #                  alpha=0.2, color=color_cum)
 
     # Plot Vertical Line for Epsilon Convergence
     line3 = None
@@ -265,12 +265,12 @@ if __name__ == "__main__":
 
     plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) Performance (Avg over {len(SEEDS)} seeds)', pad=20)
 
-    lines_for_legend = [line1, line2]
-    if line3: # Only add line3 to legend if it was plotted
-        lines_for_legend.append(line3)
+    # lines_for_legend = [line1, line2]
+    # if line3: # Only add line3 to legend if it was plotted
+    #     lines_for_legend.append(line3)
     
-    labels_for_legend = [l.get_label() for l in lines_for_legend]
-    ax1.legend(lines_for_legend, labels_for_legend, loc='upper center', bbox_to_anchor=(0.5, -0.12), fancybox=True, shadow=True, ncol=len(lines_for_legend))
+    # labels_for_legend = [l.get_label() for l in lines_for_legend]
+    # ax1.legend(lines_for_legend, labels_for_legend, loc='upper center', bbox_to_anchor=(0.5, -0.12), fancybox=True, shadow=True, ncol=len(lines_for_legend))
     
     ax1.grid(True, linestyle='--')
     fig.tight_layout(rect=[0, 0.05, 1, 0.95])
