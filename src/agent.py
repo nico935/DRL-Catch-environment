@@ -155,7 +155,7 @@ class DQNAgent(Agent):
         
 
     def learn(self) -> None:
-        if self.mem_counter < burn_in_period: # Not enough samples yet
+        if self.mem_counter < self.burn_in_period: # Not enough samples yet
             return  
 
         self.optimizer.zero_grad() 
@@ -266,7 +266,7 @@ class DDQNAgent(Agent):
         
 
     def learn(self) -> None:
-        if self.mem_counter < 7000: # Not enough samples yet
+        if self.mem_counter < self.burn_in_period: # Not enough samples yet
             return  
 
         self.optimizer.zero_grad() # Reset gradients before backpropagation
