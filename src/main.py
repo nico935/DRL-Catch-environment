@@ -126,6 +126,7 @@ def run_environment(seed_value):
     return current_run_score, current_run_moving_average
 
 if __name__ == "__main__":
+    import time
     timestamp = time.strftime("%M%S")
     RESULTS_DIR = "/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/DQN_results"
     for seed in SEEDS:
