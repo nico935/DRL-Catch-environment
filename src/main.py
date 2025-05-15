@@ -169,7 +169,7 @@ if __name__ == "__main__":
     epsilon_decay = config["common_agent_params"]["epsilon_decay"]
     epsilon_min = config["common_agent_params"]["epsilon_min"]
     
-    burn_in_period_steps = config["common_agent_params"]["burn_in_period"] 
+    burn_in_period= config["common_agent_params"]["burn_in_period"] 
     AVG_STEPS_PER_EPISODE = 11 # As per your observation
 
 
@@ -255,7 +255,95 @@ if __name__ == "__main__":
 
     lines_for_legend = [line1, line2]
     if line3: 
-        lines_for_legend.append(line3)
+        lines_for_if __name__ == "__main__":
+   # --- Argument Parsing ---
+    parser = argparse.ArgumentParser(description="Run DRL experiments using a configuration file.")
+    parser.add_argument("config_file", type=str, help="Path to the JSON configuration file.")
+    args = parser.parse_args()
+
+    # --- Load Configuration ---
+    config = load_config(args.config_file)
+    # print(f"Loaded configuration from: {args.config_file}") # Optional: for brevity
+    # print("Configuration details:", json.dumps(config, indent=2)) # Optional: for brevity
+
+    # --- Calculate timestep where epsilon is constant ---
+    epsilon_start = config["common_agent_params"]["epsilon_start"]
+    epsilon_decay = config["common_agent_params"]["epsilon_decay"]
+    epsilon_min = config["common_agent_params"]["epsilon_min"]
+    
+    # Ensure 'burn_in_period' is in your config["common_agent_params"]
+    # This is the number of learning steps before epsilon decay starts (e.g., 7000).
+    burn_in_period= config["common_agent_params"]["burn_in_period"] 
+    AVG_STEPS_PER_EPISODE = 11 # As per your observation
+
+    steps_to_reach_min_decay_applications = float('inf')
+    constant_epsilon_episode = -1
+
+    if epsilon_start <= epsilon_min:
+        steps_to_reach_min_decay_applications = 0
+    elif not (0 < epsilon_decay < 1.0):
+        steps_to_reach_min_decay_applications = float('inf')
+    else:
+        try:
+            numerator = math.log(epsilon_min / epsilon_start)
+            denominator = math.log(epsilon_decay)
+            num_decay_applications = numerator / denominator
+            steps_to_reach_min_decay_applications = math.ceil(num_decay_applications)
+        except ValueError: # Should not happen with valid inputs but as a minimal check
+            steps_to_reach_min_decay_applications = float('inf')
+
+    if steps_to_reach_min_decay_applications != float('inf'):
+        total_active_learning_steps = burn_in_period + steps_to_reach_min_decay_applications
+        if AVG_STEPS_PER_EPISODE > 0:
+            constant_epsilon_episode = math.ceil(total_active_learning_steps / AVG_STEPS_PER_EPISODE)
+    
+    # print(f"Calculated: Epsilon min approx at episode: {constant_epsilon_episode}") # Optional
+
+    # --- Determine Agent and Network Class from Config ---
+    if config["agent_type"] == "DQN":
+        agent_class = DQNAgent
+    elif config["agent_type"] == "DDQN":
+        agent_class = DDQNAgent
+    else:
+        raise ValueError(f"Unknown agent_type: {config['agent_type']}")
+
+    network_class = NETWORK_CLASSES.get(config["network_architecture"])
+    if network_class is None:
+        raise ValueError(f"Unknown network_architecture: {config['network_architecture']}")
+
+    # print(f"Selected Agent: {agent_class.__name__}, Network: {network_class.__name__}") # Optional
+
+    N_EPISODES = config['n_episodes']
+    SEEDS = config['seeds']
+
+    # --- Run the Environment for each seed ---
+    experiment_start_time = time.time()
+    all_experiment_runs_data = []  
+    for seed in SEEDS:
+        result_from_seed = run_environment(seed, config, agent_class, network_class)
+        all_experiment_runs_data.append(result_from_seed)
+    # print(f"Total run time: {time.time() - experiment_start_time:.2f}s") # Optional
+
+    # --- Process and Plot Results ---
+    # Assuming all_experiment_runs_data is not empty and data is uniform
+    EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
+    if not os.path.exists(EXPERIMENT_RESULTS_DIR):
+        os.makedirs(EXPERIMENT_RESULTS_DIR)
+
+    all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
+    all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
+    
+    mean_ma_scores = np.mean(all_moving_averages, axis=0)
+    std_ma_scores = np.std(all_moving_averages, axis=0)
+    episodes_axis = np.arange(1, N_EPISODES + 1) # Assumes all runs go for N_EPISODES
+
+    all_cumulative_rewards_list = [np.cumsum(scores) for scores in all_raw_scores]
+    # Simple approach: Assume all episodes run to N_EPISODES for cumulative reward mean
+    # If not, this np.mean will error or behave unexpectedly if inner lists have different lengths.
+    # For the "simpler code" request, we omit padding that was in previous versions.
+    mean_cumulative_rewards = np.mean(all_cumulative_rewards_list, axis=0)
+    std_cumulative_rewards = np.std(all_cumulative_rewards_list, axis=0)
+    legend.append(line3)
     
     labels_for_legend = [l.get_label() for l in lines_for_legend]
     ax1.legend(lines_for_legend, labels_for_legend, loc='best') # Simpler legend location
