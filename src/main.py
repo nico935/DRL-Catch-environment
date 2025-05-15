@@ -226,44 +226,52 @@ if __name__ == "__main__":
     std_cumulative_rewards = np.std(all_cumulative_rewards_list, axis=0)
  
 
-    fig, ax1 = plt.subplots(figsize=(12, 7)) # Adjusted size slightly
+ # --- Create Two Subplots ---
+    fig, axs = plt.subplots(2, 1, figsize=(12, 14), sharex=True) # 2 rows, 1 column, share x-axis
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-    # Plot 1: Moving Average Reward
+    # Subplot 1: Moving Average Reward
     color_ma = 'tab:blue'
-    ax1.set_xlabel('Episode')
-    ax1.set_ylabel('Reward Values')
-    line1, = ax1.plot(episodes_axis, mean_ma_scores, color=color_ma, linestyle='-', label='Mean MA Reward')
-    ax1.fill_between(episodes_axis, mean_ma_scores - std_ma_scores, mean_ma_scores + std_ma_scores, alpha=0.2, color=color_ma)
-    ax1.tick_params(axis='y')
+    axs[0].set_ylabel('Mean Average Reward')
+    axs[0].plot(episodes_axis, mean_ma_scores, color=color_ma, linestyle='-', label='Mean MA Reward')
+    axs[0].fill_between(episodes_axis, mean_ma_scores - std_ma_scores, mean_ma_scores + std_ma_scores, alpha=0.2, color=color_ma)
+    
+    line_eps_ma = None # Initialize for legend
+    if constant_epsilon_episode > 0 and constant_epsilon_episode <= N_EPISODES : # Check if within plot range
+        line_eps_ma = axs[0].axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
+    
+    axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds')
+    
+    legend_elements_ma = [axs[0].get_lines()[0]] # Get the MA line
+    if line_eps_ma: # Add epsilon line to legend if plotted
+        legend_elements_ma.append(line_eps_ma)
+    axs[0].legend(handles=legend_elements_ma, loc='best')
+    axs[0].grid(True, linestyle='--')
 
-    # Plot 2: Cumulative Reward
+    # Subplot 2: Cumulative Reward
     color_cum = 'tab:red'
-    # Plotting against the same episodes_axis. Assumes mean_cumulative_rewards also has N_EPISODES length.
-    line2, = ax1.plot(episodes_axis, mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
-    ax1.fill_between(episodes_axis, 
-                     mean_cumulative_rewards - std_cumulative_rewards, 
-                     mean_cumulative_rewards + std_cumulative_rewards, 
-                     alpha=0.2, color=color_cum)
+    axs[1].set_xlabel('Episode')
+    axs[1].set_ylabel('Mean Cumulative Reward')
+    axs[1].plot(episodes_axis, mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
+    axs[1].fill_between(episodes_axis, 
+                       mean_cumulative_rewards - std_cumulative_rewards, 
+                       mean_cumulative_rewards + std_cumulative_rewards, 
+                       alpha=0.2, color=color_cum)
 
-    # Plot Vertical Line for Epsilon Convergence
-    line3 = None
-    if constant_epsilon_episode > 0:
-        line3 = ax1.axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
-
-    plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds', pad=15)
-
-    lines_for_legend = [line1, line2]
-    if line3: 
-        lines_for_legend.append(line3)
+    line_eps_cum = None # Initialize for legend
+    if constant_epsilon_episode > 0 and constant_epsilon_episode <= N_EPISODES: # Check if within plot range
+        line_eps_cum = axs[1].axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
     
-    labels_for_legend = [l.get_label() for l in lines_for_legend]
-    ax1.legend(lines_for_legend, labels_for_legend, loc='best') # Simpler legend location
+    # No title for the second subplot as the main title covers it, or add specific if desired.
+    legend_elements_cum = [axs[1].get_lines()[0]] # Get the Cumulative line
+    if line_eps_cum: # Add epsilon line to legend if plotted
+        legend_elements_cum.append(line_eps_cum)
+    axs[1].legend(handles=legend_elements_cum, loc='best')
+    axs[1].grid(True, linestyle='--')
     
-    ax1.grid(True, linestyle='--')
-    fig.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust rect for title
+    fig.tight_layout(rect=[0, 0.03, 1, 0.96]) # Adjust rect for main title and x-label space
 
-    plot_filename = f"plot_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
+    plot_filename = f"plot_MA_Cum_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
     plt.savefig(saved_plot_path, bbox_inches='tight')
     print(f"Plot saved to: {saved_plot_path}")
