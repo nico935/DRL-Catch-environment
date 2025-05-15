@@ -9,7 +9,7 @@ import os
 import json 
 import argparse
 from IPython.display import Image, display
-
+import time
 NETWORK_CLASSES = {
     "NeuralNetwork": NeuralNetwork,
     "SmallerNeuralNetwork": SmallerNeuralNetwork,
