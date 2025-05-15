@@ -3,31 +3,48 @@ from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from network import NeuralNetwork, SmallerNeuralNetwork # <--- Import both network classes
+from network import NeuralNetwork, SmallerNeuralNetwork,DuelingNeuralNetwork # <--- Import both network classes
 
 import os 
 import json 
 from IPython.display import Image, display
 
 
-N_EPISODES = 4000
+N_EPISODES = 1000
+#SEEDS= [42, 123, 789, 101, 555]
+SEEDS= [42, 123]
+
+#setup the agent type
 DDQN=False
 DQN=True
+
+#setup the architecture type
+DuelingDQN=False
 USE_SMALL_NN=True
-#SEEDS= [42, 123, 789, 101, 555]
-SEEDS= [42, 123,789]
-all_runs_scores = []
-all_runs_moving_averages = []
+
+
 if DDQN:
     AGENT_TYPE = "DDQN"
+    if USE_SMALL_NN:
+        network_class = SmallerNeuralNetwork
+        print(f"Using network: {network_class} for {AGENT_TYPE}")
+    else:
+        network_class = NeuralNetwork
+        print(f"Using network: {network_class} for {AGENT_TYPE}")
+
+
 elif DQN:
     AGENT_TYPE = "DQN"
-if USE_SMALL_NN:
-    network_class = SmallerNeuralNetwork
-    print(f"Using network: SmallerNeuralNetwork for {AGENT_TYPE}")
-else:
-    network_class = NeuralNetwork
-    print(f"Using network: NeuralNetwork (Atari-style) for {AGENT_TYPE}")
+    if USE_SMALL_NN:
+        network_class = SmallerNeuralNetwork
+        print(f"Using network: {network_class} for {AGENT_TYPE}")
+    elif DuelingDQN:
+        network_class = DuelingNeuralNetwork
+        print(f"Using network: {network_class} for {AGENT_TYPE}")
+    else:
+        network_class = NeuralNetwork
+        print(f"Using network: {network_class} for {AGENT_TYPE}")
+
 
 COMMON_AGENT_PARAMS = {
     "memory_size": 10000, # Example, adjust as needed
@@ -39,6 +56,10 @@ COMMON_AGENT_PARAMS = {
     "learning_rate": 0.00025, # Example
     "target_update_frequency": 2000, # Example
 }
+
+
+all_runs_scores = []
+all_runs_moving_averages = []
 
 DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_{network_class}_for_{N_EPISODES}_results"
 
@@ -54,7 +75,7 @@ def run_environment(seed_value):
 
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
-
+    #for reproducibility, slows down
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed_value) 
         torch.backends.cudnn.deterministic = True
