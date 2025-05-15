@@ -31,7 +31,7 @@ if not os.path.exists(RESULTS_DIR):
 
 def run_environment(seed_value):  
     import time
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    timestamp = time.strftime("%Y%m%d-%M%S")
 
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     plt.ylabel('100-Episode Moving Average Reward')
     plt.legend()
     plt.grid(True)
-    plot_filename = f"{AGENT_TYPE if 'AGENT_TYPE' in locals() else 'performance'}__{timestamp}catch_plot.png"
+    plot_filename = f"{AGENT_TYPE}_{timestamp}_plot.png"
     saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
     if os.path.exists(saved_plot_path):
         display(Image(filename=saved_plot_path))
