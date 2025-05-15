@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from typing import Tuple
-from network import NeuralNetwork
+from network import NeuralNetwork,SmallerNeuralNetwork
 
 class Agent():
     def __init__(
@@ -100,6 +100,7 @@ class DQNAgent(Agent):
         memory_size: int,
         state_dimensions: Tuple[int, int, int], # (height, width, fps)
         n_actions: int,
+        network_class,
         learning_rate: float = 0.00001, # Learning rate for Adam optimizer
         gamma: float = 0.99,        # Q update discounting
         epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
@@ -211,6 +212,7 @@ class DDQNAgent(Agent):
         memory_size: int,
         state_dimensions: Tuple[int, int, int], 
         n_actions: int,
+        network_class,
         learning_rate: float = 0.00001, # Learning rate for Adam optimizer
         gamma: float = 0.99,        # Q update discounting
         epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
@@ -239,8 +241,8 @@ class DDQNAgent(Agent):
         self.soft_update = soft_update
 
 
-        self.q_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)
-        self.q_target_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
+        self.q_network = network_class(input_dims=state_dimensions, n_actions=n_actions)
+        self.q_target_network = network_class(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
         self.q_target_network.eval() # Put target network in eval mode
 
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)

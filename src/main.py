@@ -11,16 +11,22 @@ from IPython.display import Image, display
 N_EPISODES = 800
 DDQN=False
 DQN=True
+USE_SMALL_NN=True
 #SEEDS= [42, 123, 789, 101, 555]
 SEEDS= [42, 42]
 all_runs_scores = []
 all_runs_moving_averages = []
 if DDQN:
     AGENT_TYPE = "DDQN"
-    RESULTS_DIR = "catch_ddqn_results"
 elif DQN:
     AGENT_TYPE = "DQN"
-    RESULTS_DIR = "catch_dqn_results"
+
+if USE_SMALL_NN:
+    network_class = SmallerNeuralNetwork
+    print(f"Using network: SmallerNeuralNetwork for {AGENT_TYPE}")
+else:
+    network_class = NeuralNetwork
+    print(f"Using network: NeuralNetwork (Atari-style) for {AGENT_TYPE}")
 
 DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_results"
 
@@ -50,6 +56,7 @@ def run_environment(seed_value):
             memory_size=10000,     
             state_dimensions=state_dimensions,
             n_actions=n_actions,
+            network_class=network_class,
             learning_rate=0.00025,  
             gamma=0.99,
             epsilon_start=1.0,
@@ -63,6 +70,7 @@ def run_environment(seed_value):
             memory_size=10000,      
             state_dimensions=state_dimensions,
             n_actions=n_actions,
+            network_class=network_class,
             learning_rate=0.00025,
             gamma=0.99,
             epsilon_start=1.0,
@@ -162,7 +170,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
 
-    plot_filename = f"{AGENT_TYPE}_{timestamp}_plot.png"
+    plot_filename = f"{network_class}_{AGENT_TYPE}_{timestamp}_plot.png"
     saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
 
     plt.savefig(saved_plot_path)
