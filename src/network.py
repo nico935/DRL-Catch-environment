@@ -93,3 +93,54 @@ class SmallerNeuralNetwork(nn.Module):
         q_values = self.fc2(x)
 
         return q_values
+
+
+
+class DuelingNeuralNetwork(nn.Module):
+    def __init__(self, input_dims: Tuple[int, int, int], n_actions: int):
+        super(DuelingNeuralNetwork, self).__init__()
+        self.input_dims = input_dims 
+        self.n_actions = n_actions
+        in_channels = self.input_dims[2]
+
+        self.conv1 = nn.Conv2d(in_channels, 16, kernel_size=8, stride=4)
+
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=4, stride=2)
+        # Input 20x20 -> Output ((20-4)/2)+1 = 9x9. Shape: (batch, 32, 9, 9)
+
+        self.conv_output_flat_size = 32 * 9 * 9  # 2592
+
+        # Value Stream
+        # Takes flattened conv output, outputs a single value V(s)
+        self.value_fc1 = nn.Linear(self.conv_output_flat_size, 128) # Hidden layer for value stream
+        self.value_output = nn.Linear(128, 1)                  # Output V(s)
+
+        # Advantage Stream
+        # Takes flattened conv output, outputs n_actions advantages A(s,a)
+        self.advantage_fc1 = nn.Linear(self.conv_output_flat_size, 128) # Hidden layer for advantage stream
+        self.advantage_output = nn.Linear(128, n_actions)           # Output A(s,a) for each action
+
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        x = state.permute(0, 3, 1, 2)
+
+        # Pass through convolutional base
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+
+        # Flatten the output from conv base
+        x = torch.flatten(x, start_dim=1)
+
+        # Value Stream
+        value = F.relu(self.value_fc1(x))
+        value = self.value_output(value)  # Shape: (batch_size, 1)
+
+        # Advantage Stream
+        advantage = F.relu(self.advantage_fc1(x))
+        advantage = self.advantage_output(advantage) # Shape: (batch_size, n_actions)
+
+        # Combine Value and Advantage streams
+        # Q(s,a) = V(s) + (A(s,a) - mean(A(s,a')))
+        # 'advantage.mean(dim=1, keepdim=True)' calculates mean along the action dimension
+        q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
+
+        return q_values
