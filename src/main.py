@@ -176,7 +176,7 @@ if __name__ == "__main__":
     num_decay = numerator / denominator
     steps_to_reach_min = math.ceil(num_decay)
 
-    constant_epsilon_episode = burn_in_period + steps_to_reach_min
+    constant_epsilon_episode = math.ceil((burn_in_period + steps_to_reach_min)/11)
 
     # --- Determine Agent and Network Class from Config ---
     if config["agent_type"] == "DQN":
