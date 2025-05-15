@@ -33,6 +33,11 @@ def run_environment(seed_value):
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
 
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_value) 
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     env = CatchEnv()
     state_dimensions = env.observation_space.shape
     n_actions = env.action_space.n
@@ -150,7 +155,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plot_filename = f"{AGENT_TYPE if 'AGENT_TYPE' in locals() else 'performance'}_catch_plot.png"
-    save_plot_path = os.path.join(RESULTS_DIR, plot_filename)
+    saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
     if os.path.exists(saved_plot_path):
         display(Image(filename=saved_plot_path))
     else:
