@@ -3,6 +3,8 @@ from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from network import NeuralNetwork, SmallerNeuralNetwork # <--- Import both network classes
+
 import os 
 import json 
 from IPython.display import Image, display
