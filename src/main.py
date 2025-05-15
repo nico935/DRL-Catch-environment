@@ -189,7 +189,7 @@ if __name__ == "__main__":
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
     for seed in SEEDS:
-        result_from_seed = run_environment(seed, config, agent_class, network_class_to_use)
+        result_from_seed = run_environment(seed, config, agent_class, network_class)
         all_experiment_runs_data.append(result_from_seed)
 
     experiment_end_time = time.time()
