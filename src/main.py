@@ -142,7 +142,7 @@ def run_environment(seed_value, config,agent_class, network_class):
 
     filename = f"results_seed_{seed_value}_{config['agent_type']}_{config['network_architecture']}_{run_timestamp}.json"
     filepath = os.path.join(EXPERIMENT_RESULTS_DIR, filename)
-    
+
     if not os.path.exists(EXPERIMENT_RESULTS_DIR):
         os.makedirs(EXPERIMENT_RESULTS_DIR)
 
@@ -183,7 +183,6 @@ if __name__ == "__main__":
     print(f"Selected Network: {network_class.__name__}")
 
     # --- Initialize lists for collecting results across seeds ---
-    all_runs_data = []
     all_moving_averages = []
     all_raw_scores = []
     N_EPISODES= config['n_episodes']
@@ -193,6 +192,7 @@ if __name__ == "__main__":
     experiment_start_time = time.time()
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
+    all_experiment_runs_data = []  
     for seed in SEEDS:
         result_from_seed = run_environment(seed, config, agent_class, network_class)
         all_experiment_runs_data.append(result_from_seed)
