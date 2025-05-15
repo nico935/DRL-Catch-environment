@@ -163,20 +163,22 @@ if __name__ == "__main__":
 
     # --- Load Configuration ---
     config = load_config(args.config_file)
-    print(f"Loaded configuration from: {args.config_file}")
-    print("Configuration details:", json.dumps(config, indent=2))
+
     # --- Calculate timestep where epsilon is constant ---
     epsilon_start = config["common_agent_params"]["epsilon_start"]
     epsilon_decay = config["common_agent_params"]["epsilon_decay"]
     epsilon_min = config["common_agent_params"]["epsilon_min"]
-    burn_in_period= config["common_agent_params"]["burn_in_period"]
+    
+    burn_in_period_steps = config["common_agent_params"]["burn_in_period"] 
+    AVG_STEPS_PER_EPISODE = 11 # As per your observation
+
+
 
     numerator = math.log(epsilon_min / epsilon_start)
     denominator = math.log(epsilon_decay)
-    num_decay = numerator / denominator
-    steps_to_reach_min = math.ceil(num_decay)
-
-    constant_epsilon_episode = math.ceil((burn_in_period + steps_to_reach_min)/11)
+    num_decay = math.ceil(numerator / denominator)
+    constant_epsilon_episode = math.ceil((num_decay+burn_in_period)/ AVG_STEPS_PER_EPISODE)
+    print(f"Calculated: number of episodes till min epsilon reached: {constant_epsilon_episode}") # Optional
 
     # --- Determine Agent and Network Class from Config ---
     if config["agent_type"] == "DQN":
@@ -184,60 +186,48 @@ if __name__ == "__main__":
     elif config["agent_type"] == "DDQN":
         agent_class = DDQNAgent
     else:
-        raise ValueError(f"Unknown agent_type in config: {config['agent_type']}")
+        raise ValueError(f"Unknown agent_type: {config['agent_type']}")
 
     network_class = NETWORK_CLASSES.get(config["network_architecture"])
     if network_class is None:
-        raise ValueError(f"Unknown network_architecture in config: {config['network_architecture']}")
+        raise ValueError(f"Unknown network_architecture: {config['network_architecture']}")
 
-    print(f"Selected Agent: {agent_class.__name__}")
-    print(f"Selected Network: {network_class.__name__}")
+    # print(f"Selected Agent: {agent_class.__name__}, Network: {network_class.__name__}") # Optional
 
-    # --- Initialize lists for collecting results across seeds ---
-    all_moving_averages = []
-    all_raw_scores = []
-    N_EPISODES= config['n_episodes']
+    N_EPISODES = config['n_episodes']
     SEEDS = config['seeds']
 
     # --- Run the Environment for each seed ---
     experiment_start_time = time.time()
-    experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
-
     all_experiment_runs_data = []  
     for seed in SEEDS:
         result_from_seed = run_environment(seed, config, agent_class, network_class)
         all_experiment_runs_data.append(result_from_seed)
-
-    experiment_end_time = time.time()
-    elapsed_time = experiment_end_time - experiment_start_time
-    print(f"Total time for running all seeds: {elapsed_time:.2f} seconds ({elapsed_time/60:.2f} minutes)")
+    # print(f"Total run time: {time.time() - experiment_start_time:.2f}s") # Optional
 
     # --- Process and Plot Results ---
-    if not all_experiment_runs_data:
-        print("No data to plot.")
-    else:
-        EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
-        if not os.path.exists(EXPERIMENT_RESULTS_DIR):
-            os.makedirs(EXPERIMENT_RESULTS_DIR)
+    # Assuming all_experiment_runs_data is not empty and data is uniform
+    EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
+    if not os.path.exists(EXPERIMENT_RESULTS_DIR):
+        os.makedirs(EXPERIMENT_RESULTS_DIR)
 
-    # Extract data for plots
     all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
     all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
     
-    epsilon_history_sample = all_experiment_runs_data[0]['epsilon_history'] if all_experiment_runs_data and 'epsilon_history' in all_experiment_runs_data[0] else []
-    
-    # Calculate mean and std for moving average rewards
     mean_ma_scores = np.mean(all_moving_averages, axis=0)
     std_ma_scores = np.std(all_moving_averages, axis=0)
-    episodes_axis = np.arange(1, N_EPISODES + 1)
+    episodes_axis = np.arange(1, N_EPISODES + 1) # Assumes all runs go for N_EPISODES
 
-    # Calculate cumulative rewards for each seed and then the mean/std
-    all_cumulative_rewards = [np.cumsum(scores) for scores in all_raw_scores]
-    mean_cumulative_rewards = np.mean(all_cumulative_rewards, axis=0)
-    std_cumulative_rewards = np.std(all_cumulative_rewards, axis=0)
-    
-    fig, ax1 = plt.subplots(figsize=(14, 8))
-    experiment_timestamp = time.strftime("%Y%m%d_%H%M%S") # For filename
+    all_cumulative_rewards_list = [np.cumsum(scores) for scores in all_raw_scores]
+    # Simple approach: Assume all episodes run to N_EPISODES for cumulative reward mean
+    # If not, this np.mean will error or behave unexpectedly if inner lists have different lengths.
+    # For the "simpler code" request, we omit padding that was in previous versions.
+    mean_cumulative_rewards = np.mean(all_cumulative_rewards_list, axis=0)
+    std_cumulative_rewards = np.std(all_cumulative_rewards_list, axis=0)
+ 
+
+    fig, ax1 = plt.subplots(figsize=(12, 7)) # Adjusted size slightly
+    experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
     # Plot 1: Moving Average Reward
     color_ma = 'tab:blue'
@@ -249,40 +239,34 @@ if __name__ == "__main__":
 
     # Plot 2: Cumulative Reward
     color_cum = 'tab:red'
-    # Ensure x-axis matches if cumulative rewards have different length than MA scores due to padding
-    # For this simplified version, we assume episodes_axis derived from MA scores is sufficient.
-    # If mean_cumulative_rewards has a different length, you might need a separate x_axis for it or ensure alignment.
-    # line2, = ax1.plot(episodes_axis[:len(mean_cumulative_rewards)], mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
-    # ax1.fill_between(episodes_axis[:len(mean_cumulative_rewards)], 
-    #                  mean_cumulative_rewards - std_cumulative_rewards, 
-    #                  mean_cumulative_rewards + std_cumulative_rewards, 
-    #                  alpha=0.2, color=color_cum)
+    # Plotting against the same episodes_axis. Assumes mean_cumulative_rewards also has N_EPISODES length.
+    line2, = ax1.plot(episodes_axis, mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
+    ax1.fill_between(episodes_axis, 
+                     mean_cumulative_rewards - std_cumulative_rewards, 
+                     mean_cumulative_rewards + std_cumulative_rewards, 
+                     alpha=0.2, color=color_cum)
 
     # Plot Vertical Line for Epsilon Convergence
     line3 = None
-    if constant_epsilon_episode != -1 and constant_epsilon_episode > 0:
-        line3 = ax1.axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min (calc) at Ep ~{constant_epsilon_episode}')
+    if constant_epsilon_episode > 0:
+        line3 = ax1.axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
 
-    plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) Performance (Avg over {len(SEEDS)} seeds)', pad=20)
+    plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds', pad=15)
 
-    # lines_for_legend = [line1, line2]
-    # if line3: # Only add line3 to legend if it was plotted
-    #     lines_for_legend.append(line3)
+    lines_for_legend = [line1, line2]
+    if line3: 
+        lines_for_legend.append(line3)
     
-    # labels_for_legend = [l.get_label() for l in lines_for_legend]
-    # ax1.legend(lines_for_legend, labels_for_legend, loc='upper center', bbox_to_anchor=(0.5, -0.12), fancybox=True, shadow=True, ncol=len(lines_for_legend))
+    labels_for_legend = [l.get_label() for l in lines_for_legend]
+    ax1.legend(lines_for_legend, labels_for_legend, loc='best') # Simpler legend location
     
     ax1.grid(True, linestyle='--')
-    fig.tight_layout(rect=[0, 0.05, 1, 0.95])
+    fig.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust rect for title
 
-    EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
-    if not os.path.exists(EXPERIMENT_RESULTS_DIR):
-        os.makedirs(EXPERIMENT_RESULTS_DIR)
-    
-    plot_filename = f"plot_rewards_eps_conv_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
+    plot_filename = f"plot_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
     plt.savefig(saved_plot_path, bbox_inches='tight')
-    print(f"Combined plot successfully saved to: {saved_plot_path}")
+    print(f"Plot saved to: {saved_plot_path}")
     plt.show()
     
 
