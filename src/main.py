@@ -7,7 +7,7 @@ import os
 import json 
 
 
-N_EPISODES = 1000
+N_EPISODES = 800
 DDQN=False
 DQN=True
 #SEEDS= [42, 123, 789, 101, 555]
