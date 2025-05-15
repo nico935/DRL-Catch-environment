@@ -139,10 +139,15 @@ def run_environment(seed_value, config,agent_class, network_class):
         "moving_average_scores": current_run_moving_average, # current_run_moving_avg collected
         "epsilon_history": eps_history 
     }
-    # Save data for this seed
+
     filename = f"results_seed_{seed_value}_{config['agent_type']}_{config['network_architecture']}_{run_timestamp}.json"
     filepath = os.path.join(EXPERIMENT_RESULTS_DIR, filename)
+    
+    if not os.path.exists(EXPERIMENT_RESULTS_DIR):
+        os.makedirs(EXPERIMENT_RESULTS_DIR)
 
+    with open(filepath, 'w') as f:
+        json.dump(result_data, f, indent=4)
     with open(filepath, 'w') as f:
         json.dump(result_data, f, indent=4) # Use indent for readability
     print(f"Results for seed {seed_value} saved to {filepath}")
