@@ -53,17 +53,7 @@ def load_config(config_path):
         config = json.load(f)
     return config
 
-epsilon_start = config["common_agent_params"]["epsilon_start"]
-epsilon_decay = config["common_agent_params"]["epsilon_decay"]
-epsilon_min = config["common_agent_params"]["epsilon_min"]
-burn_in_period= config["common_agent_params"]["burn_in_period"]
 
-numerator = math.log(epsilon_min / epsilon_start)
-denominator = math.log(epsilon_decay)
-num_decay = numerator / denominator
-steps_to_reach_min = math.ceil(num_decay)
-
-constant_epsilon_episode = burn_in_period + steps_to_reach_min
 
 def run_environment(seed_value, config,agent_class, network_class):  
     import time
@@ -175,7 +165,18 @@ if __name__ == "__main__":
     config = load_config(args.config_file)
     print(f"Loaded configuration from: {args.config_file}")
     print("Configuration details:", json.dumps(config, indent=2))
+    # --- Calculate timestep where epsilon is constant ---
+    epsilon_start = config["common_agent_params"]["epsilon_start"]
+    epsilon_decay = config["common_agent_params"]["epsilon_decay"]
+    epsilon_min = config["common_agent_params"]["epsilon_min"]
+    burn_in_period= config["common_agent_params"]["burn_in_period"]
 
+    numerator = math.log(epsilon_min / epsilon_start)
+    denominator = math.log(epsilon_decay)
+    num_decay = numerator / denominator
+    steps_to_reach_min = math.ceil(num_decay)
+
+    constant_epsilon_episode = burn_in_period + steps_to_reach_min
 
     # --- Determine Agent and Network Class from Config ---
     if config["agent_type"] == "DQN":
