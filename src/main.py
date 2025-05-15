@@ -80,10 +80,7 @@ def run_environment(seed_value):
     current_run_moving_average=[]
     
     for ep in range(N_EPISODES):
-        if ep == 0:
-            observation, info = env.reset(seed=seed_value)
-        else:
-            observation,info = env.reset()
+        observation, info = env.reset(seed=seed_value+ep)
         terminated = False
         truncated = False 
         score = 0
