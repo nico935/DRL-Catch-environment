@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from network import NeuralNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork # <--- Import both network classes
-
+import math
 import os 
 import json 
 import argparse
@@ -52,6 +52,18 @@ def load_config(config_path):
     with open(config_path, 'r') as f:
         config = json.load(f)
     return config
+
+epsilon_start = config["common_agent_params"]["epsilon_start"]
+epsilon_decay = config["common_agent_params"]["epsilon_decay"]
+epsilon_min = config["common_agent_params"]["epsilon_min"]
+burn_in_period= config["common_agent_params"]["burn_in_period"]
+
+numerator = math.log(epsilon_min / epsilon_start)
+denominator = math.log(epsilon_decay)
+num_decay = numerator / denominator
+steps_to_reach_min = math.ceil(num_decay)
+
+constant_epsilon_episode = burn_in_period + steps_to_reach_min
 
 def run_environment(seed_value, config,agent_class, network_class):  
     import time
@@ -147,8 +159,6 @@ def run_environment(seed_value, config,agent_class, network_class):
         os.makedirs(EXPERIMENT_RESULTS_DIR)
 
     with open(filepath, 'w') as f:
-        json.dump(result_data, f, indent=4)
-    with open(filepath, 'w') as f:
         json.dump(result_data, f, indent=4) # Use indent for readability
     print(f"Results for seed {seed_value} saved to {filepath}")
 
@@ -209,76 +219,70 @@ if __name__ == "__main__":
         if not os.path.exists(EXPERIMENT_RESULTS_DIR):
             os.makedirs(EXPERIMENT_RESULTS_DIR)
 
-        # Extract data for plots
-        all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
-        all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
-        
-        epsilon_history_sample = all_experiment_runs_data[0]['epsilon_history'] if all_experiment_runs_data and 'epsilon_history' in all_experiment_runs_data[0] else []
-        
-        # Calculate mean and std for moving average rewards
-        mean_ma_scores = np.mean(all_moving_averages, axis=0)
-        std_ma_scores = np.std(all_moving_averages, axis=0)
-        episodes_axis = np.arange(1, N_EPISODES + 1)
+    # Extract data for plots
+    all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
+    all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
+    
+    epsilon_history_sample = all_experiment_runs_data[0]['epsilon_history'] if all_experiment_runs_data and 'epsilon_history' in all_experiment_runs_data[0] else []
+    
+    # Calculate mean and std for moving average rewards
+    mean_ma_scores = np.mean(all_moving_averages, axis=0)
+    std_ma_scores = np.std(all_moving_averages, axis=0)
+    episodes_axis = np.arange(1, N_EPISODES + 1)
 
-        # Calculate cumulative rewards for each seed and then the mean/std
-        all_cumulative_rewards = [np.cumsum(scores) for scores in all_raw_scores]
-        mean_cumulative_rewards = np.mean(all_cumulative_rewards, axis=0)
-        std_cumulative_rewards = np.std(all_cumulative_rewards, axis=0)
+    # Calculate cumulative rewards for each seed and then the mean/std
+    all_cumulative_rewards = [np.cumsum(scores) for scores in all_raw_scores]
+    mean_cumulative_rewards = np.mean(all_cumulative_rewards, axis=0)
+    std_cumulative_rewards = np.std(all_cumulative_rewards, axis=0)
+    
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    experiment_timestamp = time.strftime("%Y%m%d_%H%M%S") # For filename
 
-        # --- Create Subplots ---
-        fig, axs = plt.subplots(3, 1, figsize=(12, 18), sharex=True) # 3 rows, 1 column of subplots
+    # Plot 1: Moving Average Reward
+    color_ma = 'tab:blue'
+    ax1.set_xlabel('Episode')
+    ax1.set_ylabel('Reward Values')
+    line1, = ax1.plot(episodes_axis, mean_ma_scores, color=color_ma, linestyle='-', label='Mean MA Reward')
+    ax1.fill_between(episodes_axis, mean_ma_scores - std_ma_scores, mean_ma_scores + std_ma_scores, alpha=0.2, color=color_ma)
+    ax1.tick_params(axis='y')
 
-        # Subplot 1: Moving Average Reward (existing plot)
-        axs[0].plot(episodes_axis, mean_ma_scores, label=f'Mean MA Reward')
-        axs[0].fill_between(episodes_axis,
-                             mean_ma_scores - std_ma_scores,
-                             mean_ma_scores + std_ma_scores,
-                             alpha=0.2, label='Mean +/- 1 Std Dev')
-        axs[0].set_ylabel('100-Ep Moving Avg Reward')
-        axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) on Catch (Avg over {len(SEEDS)} seeds)')
-        axs[0].legend()
-        axs[0].grid(True)
+    # Plot 2: Cumulative Reward
+    color_cum = 'tab:red'
+    # Ensure x-axis matches if cumulative rewards have different length than MA scores due to padding
+    # For this simplified version, we assume episodes_axis derived from MA scores is sufficient.
+    # If mean_cumulative_rewards has a different length, you might need a separate x_axis for it or ensure alignment.
+    line2, = ax1.plot(episodes_axis[:len(mean_cumulative_rewards)], mean_cumulative_rewards, color=color_cum, linestyle='--', label='Mean Cumulative Reward')
+    ax1.fill_between(episodes_axis[:len(mean_cumulative_rewards)], 
+                     mean_cumulative_rewards - std_cumulative_rewards, 
+                     mean_cumulative_rewards + std_cumulative_rewards, 
+                     alpha=0.2, color=color_cum)
 
-        # Subplot 2: Epsilon Decay
-        if epsilon_history_sample:
-            axs[1].plot(episodes_axis, epsilon_history_sample, label='Epsilon Value', color='green')
+    # Plot Vertical Line for Epsilon Convergence
+    line3 = None
+    if constant_epsilon_episode != -1 and constant_epsilon_episode > 0:
+        line3 = ax1.axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min (calc) at Ep ~{constant_epsilon_episode}')
 
-            # Find when epsilon becomes constant (reaches min_epsilon)
-            min_epsilon_value = config["common_agent_params"].get("epsilon_min", 0.001) # Get from config
-            # Find first occurrence of epsilon reaching or going below min_epsilon
-            constant_epsilon_episode = -1
-            for i, eps_val in enumerate(epsilon_history_sample):
-                if eps_val <= min_epsilon_value + 1e-5: # Add small tolerance for float comparison
-                    constant_epsilon_episode = i + 1 # Episodes are 1-indexed
-                    break
-            if constant_epsilon_episode != -1:
-                axs[1].axvline(constant_epsilon_episode, color='r', linestyle='--', label=f'Epsilon Min at Ep {constant_epsilon_episode}')
-            axs[1].set_ylabel('Epsilon')
-            axs[1].set_title('Epsilon Decay Over Episodes')
-            axs[1].legend()
-            axs[1].grid(True)
-        else:
-            axs[1].text(0.5, 0.5, 'Epsilon history not available.', ha='center', va='center')
-            axs[1].set_title('Epsilon Decay Over Episodes')
+    plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) Performance (Avg over {len(SEEDS)} seeds)', pad=20)
 
+    lines_for_legend = [line1, line2]
+    if line3: # Only add line3 to legend if it was plotted
+        lines_for_legend.append(line3)
+    
+    labels_for_legend = [l.get_label() for l in lines_for_legend]
+    ax1.legend(lines_for_legend, labels_for_legend, loc='upper center', bbox_to_anchor=(0.5, -0.12), fancybox=True, shadow=True, ncol=len(lines_for_legend))
+    
+    ax1.grid(True, linestyle='--')
+    fig.tight_layout(rect=[0, 0.05, 1, 0.95])
 
-        # Subplot 3: Cumulative Reward
-        axs[2].plot(episodes_axis, mean_cumulative_rewards, label='Mean Cumulative Reward', color='red')
-        axs[2].fill_between(episodes_axis,
-                             mean_cumulative_rewards - std_cumulative_rewards,
-                             mean_cumulative_rewards + std_cumulative_rewards,
-                             alpha=0.2, label='Mean +/- 1 Std Dev', color='purple')
-        axs[2].set_xlabel('Episode')
-        axs[2].set_ylabel('Cumulative Reward')
-        axs[2].set_title('Cumulative Reward Over Episodes')
-        axs[2].legend()
-        axs[2].grid(True)
+    EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
+    if not os.path.exists(EXPERIMENT_RESULTS_DIR):
+        os.makedirs(EXPERIMENT_RESULTS_DIR)
+    
+    plot_filename = f"plot_rewards_eps_conv_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
+    saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
+    plt.savefig(saved_plot_path, bbox_inches='tight')
+    print(f"Combined plot successfully saved to: {saved_plot_path}")
+    plt.show()
+    
 
-        plt.tight_layout() 
-
-        plot_filename = f"plot_summary_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
-        saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
-
-        plt.savefig(saved_plot_path)
-        print(f"Summary plot successfully saved to: {saved_plot_path}")
-        plt.show()
+    
