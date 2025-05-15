@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
     # Plot Vertical Line for Epsilon Convergence
     line3 = None
-    if constant_epsilon_episode not 0:
+    if constant_epsilon_episode > 0:
         line3 = ax1.axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
 
     plt.title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds', pad=15)
