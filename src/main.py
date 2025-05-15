@@ -10,9 +10,9 @@ import json
 from IPython.display import Image, display
 
 
-N_EPISODES = 1000
-#SEEDS= [42, 123, 789, 101, 555]
-SEEDS= [42, 123]
+N_EPISODES = 4000
+SEEDS= [42, 123, 789, 101, 555]
+#SEEDS= [42, 123]
 
 #setup the agent type
 DDQN=False
@@ -201,5 +201,5 @@ if __name__ == "__main__":
     plt.savefig(saved_plot_path)
     print(f"Plot successfully saved to: {saved_plot_path}")
     plt.show()
-    
+
 
