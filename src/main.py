@@ -19,8 +19,8 @@ DDQN=False
 DQN=True
 
 #setup the architecture type
-DuelingDQN=False
-USE_SMALL_NN=True
+DuelingDQN=True
+USE_SMALL_NN=False
 
 
 if DDQN:
@@ -75,11 +75,12 @@ def run_environment(seed_value):
 
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
-    #for reproducibility, slows down
-    # if torch.cuda.is_available():
-    #     torch.cuda.manual_seed_all(seed_value) 
-    #     torch.backends.cudnn.deterministic = True
-    #     torch.backends.cudnn.benchmark = False
+
+    #for reproducibility, slightly slows down training
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_value) 
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     env = CatchEnv()
     state_dimensions = env.observation_space.shape
@@ -200,5 +201,5 @@ if __name__ == "__main__":
     plt.savefig(saved_plot_path)
     print(f"Plot successfully saved to: {saved_plot_path}")
     plt.show()
-
+    
 
