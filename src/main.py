@@ -5,6 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 import os 
 import json 
+from IPython.display import Image, display
 
 
 N_EPISODES = 800
