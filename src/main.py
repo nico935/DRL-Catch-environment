@@ -68,14 +68,14 @@ def run_environment(seed_value):
             state_dimensions=state_dimensions,
             n_actions=n_actions,
             network_class=network_class,
-            **COMMON_AGENT_PARAMS
+            **COMMON_AGENT_PARAMS,
         )
     if DDQN==True:
         agent = DDQNAgent(
             state_dimensions=state_dimensions,
             n_actions=n_actions,
             network_class=network_class,
-            **COMMON_AGENT_PARAMS
+            **COMMON_AGENT_PARAMS,
             t_weight_start=0.005,
             soft_update=False,
         )
