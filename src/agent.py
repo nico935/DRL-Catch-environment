@@ -152,7 +152,7 @@ class DQNAgent(Agent):
 
             self.q_network.eval() # Set q network to evaluation mode
             with torch.no_grad(): 
-                q_values = self.q_network(state) #comput q values for current state
+                q_values = self.q_network(state) #compute q values for current state
             self.q_network.train() # Set network back to train mode
 
             return torch.argmax(q_values).item() 
@@ -162,7 +162,7 @@ class DQNAgent(Agent):
         if self.mem_counter < 7000: # Not enough samples yet
             return  
 
-        self.optimizer.zero_grad() # Reset gradients before backpropagation
+        self.optimizer.zero_grad() 
 
         # Sample a mini-batch from memory, consider case memory is not full yet
         max_mem = min(self.mem_counter, self.memory_size)
@@ -209,7 +209,7 @@ class DDQNAgent(Agent):
     def __init__(
         self,
         memory_size: int,
-        state_dimensions: Tuple[int, int, int], # (height, width, fps)
+        state_dimensions: Tuple[int, int, int], 
         n_actions: int,
         learning_rate: float = 0.00001, # Learning rate for Adam optimizer
         gamma: float = 0.99,        # Q update discounting
@@ -302,7 +302,7 @@ class DDQNAgent(Agent):
 
         q_snext= self.q_network(new_states_batch) # next state q values
         q_snext[terminal_batch] = 0.0 # Q-value of terminal state is 0
-        q_actions_batch= torch.argmax(q_snext,dim=1) #argmac actions in next state
+        q_actions_batch= torch.argmax(q_snext,dim=1) #argmax actions in next state
 
         target_q_snext= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
         target_q_snext[terminal_batch] = 0.0 
