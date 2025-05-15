@@ -10,7 +10,7 @@ import json
 from IPython.display import Image, display
 
 
-N_EPISODES = 4000
+N_EPISODES = 4000  #try 4500 next 
 SEEDS= [42, 123, 789, 101, 555]
 #SEEDS= [42, 123]
 
@@ -45,6 +45,7 @@ elif DQN:
         network_class = NeuralNetwork
         print(f"Using network: {network_class} for {AGENT_TYPE}")
 
+NETWORK_NAME = network_class.__name__
 
 COMMON_AGENT_PARAMS = {
     "memory_size": 10000, # Example, adjust as needed
@@ -52,7 +53,7 @@ COMMON_AGENT_PARAMS = {
     "epsilon_start": 1.0, # Assuming EPSILON_START is defined (e.g., 1.0)
     "epsilon_min": 0.001, # Your calculated target
     "batch_size": 32,
-    "epsilon_decay": 0.9998016, # Example
+    "epsilon_decay": 0.9998016, # with
     "learning_rate": 0.00025, # Example
     "target_update_frequency": 2000, # Example
 }
@@ -61,7 +62,7 @@ COMMON_AGENT_PARAMS = {
 all_runs_scores = []
 all_runs_moving_averages = []
 
-DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_{network_class}_for_{N_EPISODES}_results"
+DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_{NETWORK_NAME}_for_{N_EPISODES}_results"
 
 RESULTS_DIR = DRIVE_RESULTS_PATH
 
@@ -102,6 +103,7 @@ def run_environment(seed_value):
             soft_update=False,
         )
     print(f"Agent type: {AGENT_TYPE}")
+    print(f"Network type: {NETWORK_NAME}")
     print(f"Episodes: {N_EPISODES}")
     print(f"learning rate: {agent.lr}")
     print(f"Using deviiice: {agent.device}")
@@ -147,7 +149,7 @@ def run_environment(seed_value):
         "moving_average_scores": current_run_moving_average # current_run_moving_avg collected
     }
     # Save data for this seed
-    filepath = os.path.join(RESULTS_DIR, f"results_seed_{seed_value}_{timestamp}.json")
+    filepath = os.path.join(RESULTS_DIR, f"{NETWORK_NAME}_{AGENT_TYPE}_results_seed_{seed_value}_{timestamp}.json")
     with open(filepath, 'w') as f:
         json.dump(result_data, f)
     print(f"Results for seed {seed_value} saved to {filepath}")
@@ -159,7 +161,6 @@ if __name__ == "__main__":
     start_time = time.time()
         # --- Run the Environment ---
     timestamp = time.strftime("%M%S")
-    RESULTS_DIR = "/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/DQN_results"
     for seed in SEEDS:
         raw_scores, moving_avg_scores = run_environment(seed)
         all_runs_scores.append(raw_scores)
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
 
-    plot_filename = f"{network_class}_{AGENT_TYPE}_{timestamp}_plot.png"
+    plot_filename = f"{NETWORK_NAME}_{AGENT_TYPE}_{timestamp}_plot.png"
     saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
 
     plt.savefig(saved_plot_path)

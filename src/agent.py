@@ -101,23 +101,18 @@ class DQNAgent(Agent):
         state_dimensions: Tuple[int, int, int], # (height, width, fps)
         n_actions: int,
         network_class,
-        learning_rate: float = 0.00001, # Learning rate for Adam optimizer
-        gamma: float = 0.99,        # Q update discounting
-        epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
-        epsilon_min: float = 0.0001,
-        epsilon_decay: float = 0.986,  
-        batch_size: int = 32,
-        target_update_frequency: int = 1000 # How often to update target network
-    ):
+        **kwargs
+         ):
         super(DQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
+        self.lr = kwargs.get("learning_rate", 0.0001)
+        self.gamma = kwargs.get("gamma", 0.99)
+        self.epsilon = kwargs.get("epsilon_start", 1.0)
+        self.epsilon_min = kwargs.get("epsilon_min", 0.0001)
+        self.epsilon_decay = kwargs.get("epsilon_decay", 0.986)
+        self.batch_size = kwargs.get("batch_size", 32)
+        self.target_update_frequency = kwargs.get("target_update_frequency", 1000)
+        self.burn_in_period = kwargs.get("burn_in_period", 7000)
 
-        self.lr = learning_rate
-        self.gamma = gamma
-        self.epsilon = epsilon_start
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
-        self.batch_size = batch_size
-        self.target_update_frequency = target_update_frequency  
         self.learn_step_counter = 0 # For target network updates
 
         # Input_dims for NeuralNetwork is (84, 84, FPS) 
@@ -160,7 +155,7 @@ class DQNAgent(Agent):
         
 
     def learn(self) -> None:
-        if self.mem_counter < 7000: # Not enough samples yet
+        if self.mem_counter < burn_in_period: # Not enough samples yet
             return  
 
         self.optimizer.zero_grad() 
@@ -213,31 +208,22 @@ class DDQNAgent(Agent):
         state_dimensions: Tuple[int, int, int], 
         n_actions: int,
         network_class,
-        learning_rate: float = 0.00001, # Learning rate for Adam optimizer
-        gamma: float = 0.99,        # Q update discounting
-        epsilon_start: float = 1.0, # exporation of greedy policy, decaying at rate epsilon_decay
-        epsilon_min: float = 0.0001,
-        epsilon_decay: float = 0.986,
         t_weight_start: float = 0.2,
-        t_weight_min: float = 0.0,
-        t_weight_decay: float = 0.986,
-        batch_size: int = 32,
-        target_update_frequency: int = 100,
         soft_update: bool = True   #whether to use soft update or hard update
-            ):
+        **kwargs 
+        ):
         super(DDQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
+        self.lr = kwargs.get("learning_rate", 0.0001)
+        self.gamma = kwargs.get("gamma", 0.99)
+        self.epsilon = kwargs.get("epsilon_start", 1.0)
+        self.epsilon_min = kwargs.get("epsilon_min", 0.0001)
+        self.epsilon_decay = kwargs.get("epsilon_decay", 0.986)
+        self.batch_size = kwargs.get("batch_size", 32)
+        self.target_update_frequency = kwargs.get("target_update_frequency", 1000)
+        self.burn_in_period = kwargs.get("burn_in_period", 7000)
 
-        self.lr = learning_rate
-        self.gamma = gamma
-        self.epsilon = epsilon_start
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
-        self.t_weight = t_weight_start
-        self.t_weight_min = t_weight_min
-        self.t_weight_decay = t_weight_decay
-        self.batch_size = batch_size
-        self.target_update_frequency = target_update_frequency
         self.learn_step_counter = 0 # For target network updates
+        self.t_weight = t_weight_start
         self.soft_update = soft_update
 
 
