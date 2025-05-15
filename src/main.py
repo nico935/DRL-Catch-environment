@@ -31,7 +31,7 @@ if not os.path.exists(RESULTS_DIR):
 
 def run_environment(seed_value):  
     import time
-t   timestamp = time.strftime("%Y%m%d-%H%M%S")
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
