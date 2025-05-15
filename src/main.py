@@ -22,7 +22,6 @@ if DDQN:
     AGENT_TYPE = "DDQN"
 elif DQN:
     AGENT_TYPE = "DQN"
-
 if USE_SMALL_NN:
     network_class = SmallerNeuralNetwork
     print(f"Using network: SmallerNeuralNetwork for {AGENT_TYPE}")
@@ -30,7 +29,18 @@ else:
     network_class = NeuralNetwork
     print(f"Using network: NeuralNetwork (Atari-style) for {AGENT_TYPE}")
 
-DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_results"
+COMMON_AGENT_PARAMS = {
+    "memory_size": 10000, # Example, adjust as needed
+    "gamma": 0.99,
+    "epsilon_start": 1.0, # Assuming EPSILON_START is defined (e.g., 1.0)
+    "epsilon_min": 0.001, # Your calculated target
+    "batch_size": 32,
+    "epsilon_decay": 0.9998016, # Example
+    "learning_rate": 0.00025, # Example
+    "target_update_frequency": 2000, # Example
+}
+
+DRIVE_RESULTS_PATH = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{AGENT_TYPE}_{network_class}_for_{N_EPISODES}_results"
 
 RESULTS_DIR = DRIVE_RESULTS_PATH
 
@@ -55,33 +65,18 @@ def run_environment(seed_value):
     n_actions = env.action_space.n
     if DQN==True:
         agent = DQNAgent(
-            memory_size=10000,     
             state_dimensions=state_dimensions,
             n_actions=n_actions,
             network_class=network_class,
-            learning_rate=0.00025,  
-            gamma=0.99,
-            epsilon_start=1.0,
-            epsilon_min=0.0001,
-            epsilon_decay=0.999901,   
-            batch_size=32,
-            target_update_frequency=2000 
+            **COMMON_AGENT_PARAMS
         )
     if DDQN==True:
         agent = DDQNAgent(
-            memory_size=10000,      
             state_dimensions=state_dimensions,
             n_actions=n_actions,
             network_class=network_class,
-            learning_rate=0.00025,
-            gamma=0.99,
-            epsilon_start=1.0,
-            epsilon_min=0.0001,
-            epsilon_decay=0.999901,  
+            **COMMON_AGENT_PARAMS
             t_weight_start=0.005,
-            t_weight_min=0.00001,
-            t_weight_decay=0.999,
-            target_update_frequency=2000,
             soft_update=False,
         )
     print(f"Agent type: {AGENT_TYPE}")
@@ -138,14 +133,20 @@ def run_environment(seed_value):
 
 if __name__ == "__main__":
     import time
+    #calculate the time
+    start_time = time.time()
+        # --- Run the Environment ---
     timestamp = time.strftime("%M%S")
     RESULTS_DIR = "/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/DQN_results"
     for seed in SEEDS:
         raw_scores, moving_avg_scores = run_environment(seed)
         all_runs_scores.append(raw_scores)
         all_runs_moving_averages.append(moving_avg_scores)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Total time for running all seeds: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
 
-    # --- Process and Plot Results ---
+        # --- Process and Plot Results ---
     mean_ma_scores = np.mean(all_runs_moving_averages, axis=0)
     std_ma_scores = np.std(all_runs_moving_averages, axis=0)
    
@@ -177,10 +178,6 @@ if __name__ == "__main__":
 
     plt.savefig(saved_plot_path)
     print(f"Plot successfully saved to: {saved_plot_path}")
-
-    if os.path.exists(saved_plot_path):
-        display(Image(filename=saved_plot_path))
-    else:
-        print(f"Plot image not found at: {saved_plot_path}")
+    plt.show()
 
 
