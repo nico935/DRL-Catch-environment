@@ -10,12 +10,12 @@ import json
 from IPython.display import Image, display
 
 
-N_EPISODES = 800
+N_EPISODES = 4000
 DDQN=False
 DQN=True
 USE_SMALL_NN=True
 #SEEDS= [42, 123, 789, 101, 555]
-SEEDS= [42, 42]
+SEEDS= [42, 123,789]
 all_runs_scores = []
 all_runs_moving_averages = []
 if DDQN:

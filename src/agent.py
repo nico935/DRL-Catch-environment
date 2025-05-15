@@ -121,8 +121,8 @@ class DQNAgent(Agent):
         self.learn_step_counter = 0 # For target network updates
 
         # Input_dims for NeuralNetwork is (84, 84, FPS) 
-        self.q_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)
-        self.q_target_network = NeuralNetwork(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
+        self.q_network = network_class(input_dims=state_dimensions, n_actions=n_actions)
+        self.q_target_network = network_class(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
         self.q_target_network.load_state_dict(self.q_network.state_dict()) # Initialize target with eval weights with parameter tensor state_dict
         self.q_target_network.eval() # Put target network in eval mode
 
