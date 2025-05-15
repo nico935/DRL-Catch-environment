@@ -3,7 +3,7 @@ from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from network import NeuralNetwork, SmallerNeuralNetwork,DuelingNeuralNetwork # <--- Import both network classes
+from network import NeuralNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork # <--- Import both network classes
 
 import os 
 import json 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         all_runs_moving_averages.append(moving_avg_scores)
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Total time for running all seeds: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
+    print(f"Total time for running all seeds: {elapsed_time:.2f} seconds ({elapsed_time/60:.2f} minutes)")
 
         # --- Process and Plot Results ---
     mean_ma_scores = np.mean(all_runs_moving_averages, axis=0)
