@@ -8,7 +8,6 @@ from network import NeuralNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork # 
 import os 
 import json 
 import argparse
-from IPython.display import Image, display
 import time
 NETWORK_CLASSES = {
     "NeuralNetwork": NeuralNetwork,
@@ -101,7 +100,11 @@ def run_environment(seed_value, config,agent_class, network_class):
     N_EPISODES = config['n_episodes']
 
     for ep in range(N_EPISODES):
-        observation, info = env.reset(seed=seed_value+ep)
+        if ep==0:
+            observation, info = env.reset(seed=seed_value)
+        else:
+            observation, info = env.reset()
+
         terminated = False
         truncated = False 
         score = 0
@@ -175,9 +178,9 @@ if __name__ == "__main__":
     print(f"Selected Network: {network_class.__name__}")
 
     # --- Initialize lists for collecting results across seeds ---
-    all_runs_scores = []
-    all_runs_moving_averages = []
-
+    all_runs_data = []
+    all_moving_averages = []
+    all_raw_scores = []
     N_EPISODES= config['n_episodes']
     SEEDS = config['seeds']
 
@@ -186,7 +189,7 @@ if __name__ == "__main__":
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
     for seed in SEEDS:
-        result_from_seed = run_environment(seed, config, agent_class_to_use, network_class_to_use)
+        result_from_seed = run_environment(seed, config, agent_class, network_class_to_use)
         all_experiment_runs_data.append(result_from_seed)
 
     experiment_end_time = time.time()
@@ -255,7 +258,7 @@ if __name__ == "__main__":
 
 
         # Subplot 3: Cumulative Reward
-        axs[2].plot(episodes_axis, mean_cumulative_rewards, label='Mean Cumulative Reward', color='purple')
+        axs[2].plot(episodes_axis, mean_cumulative_rewards, label='Mean Cumulative Reward', color='red')
         axs[2].fill_between(episodes_axis,
                              mean_cumulative_rewards - std_cumulative_rewards,
                              mean_cumulative_rewards + std_cumulative_rewards,
