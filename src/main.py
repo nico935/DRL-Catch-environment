@@ -30,6 +30,9 @@ if not os.path.exists(RESULTS_DIR):
     print(f"Created results directory in Google Drive: {RESULTS_DIR}")
 
 def run_environment(seed_value):  
+    import time
+t   timestamp = time.strftime("%Y%m%d-%H%M%S")
+
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
 
@@ -116,7 +119,7 @@ def run_environment(seed_value):
         "moving_average_scores": current_run_moving_average # current_run_moving_avg collected
     }
     # Save data for this seed
-    filepath = os.path.join(RESULTS_DIR, f"results_seed_{seed_value}.json")
+    filepath = os.path.join(RESULTS_DIR, f"results_seed_{seed_value}_{timestamp}.json")
     with open(filepath, 'w') as f:
         json.dump(result_data, f)
     print(f"Results for seed {seed_value} saved to {filepath}")
@@ -154,7 +157,7 @@ if __name__ == "__main__":
     plt.ylabel('100-Episode Moving Average Reward')
     plt.legend()
     plt.grid(True)
-    plot_filename = f"{AGENT_TYPE if 'AGENT_TYPE' in locals() else 'performance'}_catch_plot.png"
+    plot_filename = f"{AGENT_TYPE if 'AGENT_TYPE' in locals() else 'performance'}__{timestamp}catch_plot.png"
     saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
     if os.path.exists(saved_plot_path):
         display(Image(filename=saved_plot_path))
