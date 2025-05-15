@@ -31,7 +31,7 @@ if not os.path.exists(RESULTS_DIR):
 
 def run_environment(seed_value):  
     import time
-    timestamp = time.strftime("%Y%m%d-%M%S")
+    timestamp = time.strftime("%M%S")
 
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
@@ -126,8 +126,8 @@ def run_environment(seed_value):
     return current_run_score, current_run_moving_average
 
 if __name__ == "__main__":
-    import time
     timestamp = time.strftime("%M%S")
+    RESULTS_DIR = "/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/DQN_results"
     for seed in SEEDS:
         raw_scores, moving_avg_scores = run_environment(seed)
         all_runs_scores.append(raw_scores)
@@ -154,13 +154,18 @@ if __name__ == "__main__":
     #                  mean_ma_scores + 2 * std_ma_scores,
     #                  alpha=0.1, label='Mean +/- 2 Std Dev')
 
-    plt.title(f'{AGENT_TYPE} Perforcmance on Catch Game (Average over {len(SEEDS)} seeds)')
+    plt.title(f'{AGENT_TYPE} Performance on Catch Game (Average over {len(SEEDS)} seeds)')
     plt.xlabel('Episode')
     plt.ylabel('100-Episode Moving Average Reward')
     plt.legend()
     plt.grid(True)
+
     plot_filename = f"{AGENT_TYPE}_{timestamp}_plot.png"
     saved_plot_path = os.path.join(RESULTS_DIR, plot_filename)
+
+    plt.savefig(saved_plot_path)
+    print(f"Plot successfully saved to: {saved_plot_path}")
+
     if os.path.exists(saved_plot_path):
         display(Image(filename=saved_plot_path))
     else:
