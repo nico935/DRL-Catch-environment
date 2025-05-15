@@ -185,7 +185,7 @@ if __name__ == "__main__":
     experiment_start_time = time.time()
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-    for seed in SEEDS_FROM_CONFIG:
+    for seed in SEEDS:
         result_from_seed = run_environment(seed, config, agent_class_to_use, network_class_to_use)
         all_experiment_runs_data.append(result_from_seed)
 
@@ -227,7 +227,7 @@ if __name__ == "__main__":
                              mean_ma_scores + std_ma_scores,
                              alpha=0.2, label='Mean +/- 1 Std Dev')
         axs[0].set_ylabel('100-Ep Moving Avg Reward')
-        axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) on Catch (Avg over {len(SEEDS_FROM_CONFIG)} seeds)')
+        axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) on Catch (Avg over {len(SEEDS)} seeds)')
         axs[0].legend()
         axs[0].grid(True)
 
