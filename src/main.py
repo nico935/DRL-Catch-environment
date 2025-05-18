@@ -3,7 +3,7 @@ from agent import DQNAgent, DDQNAgent, DQVAgent, DQVMaxAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from network import QNetwork, SmallQNetwork, DuelingNeuralNetwork , VNetwork
+from network import QNetwork, SmallQNetwork, DuelingNeuralNetwork, VNetwork
 import math
 import os 
 import json 
@@ -179,7 +179,8 @@ if __name__ == "__main__":
         result_from_seed = run_environment(seed, config, agent_class,network_args)
         all_experiment_runs_data.append(result_from_seed)
     end_time = time.time()
-    print(f"Total run time: {end_time- start_time:.2f}s")
+    run_time= end_time - start_time
+    print(f"Total run time: {run_time:.2f}s")
 
     all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
     all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
@@ -200,6 +201,7 @@ if __name__ == "__main__":
     "mean_cumulative_rewards": mean_cumulative_rewards.tolist(),
     "std_cumulative_rewards": std_cumulative_rewards.tolist(),
     "all_seeds": SEEDS
+    "run_time": run_time,
     }
 
     filename = f"results_{config['agent_type']}_{net_name}.json"
