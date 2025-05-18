@@ -1,5 +1,5 @@
 from environment import CatchEnv
-from agent import DQNAgent, DDQNAgent
+from agent import DQNAgent, DDQNAgent, DQVAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
