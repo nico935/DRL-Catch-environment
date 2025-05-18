@@ -86,7 +86,7 @@ def run_environment(seed_value, config,agent_class,network_args):
             run_avg_score = np.mean(current_run_score)
         current_run_moving_average.append(run_avg_score)
         if (ep + 1) % 50 == 0:
-            print(f"score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
+            print(f"score: {ep} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
 
     result_data = {
         "seed": seed_value,
