@@ -156,7 +156,7 @@ class VNetwork(nn.Module):
         # Input 20x20 -> Output ((20-4)/2)+1 = 9x9. Shape: (batch, 32, 9, 9)
         self.conv_output_flat_size = 32 * 9 * 9  # 2592
 
-        self.fc_value = nn.Linear(self.fc1_dims, 128) 
+        self.fc_value = nn.Linear(self.conv_output_flat_size, 128) 
         self.value_output = nn.Linear(128, 1) 
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
