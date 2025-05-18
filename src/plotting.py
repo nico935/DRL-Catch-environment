@@ -18,7 +18,7 @@ experiment_files = {
 epsilon_min_episode = 3491
 
 # --- Function to create a plot ---
-def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker):
+def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker,save_filename=None):
     plt.figure(figsize=(15, 10))
     plot_handles = [] # For custom legend including axvline
 
@@ -46,13 +46,20 @@ def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_ep
     plt.tight_layout()
     plt.show()
 
+    if save_filename is not None:
+            save_path = os.path.join(base_drive_path, save_filename)
+            plt.savefig(save_path, bbox_inches='tight')
+            print(f"Plot saved to: {save_path}")
+
+    plt.show()
 # --- Plot 1: Mean Moving Average Scores ---
 create_comparison_plot(
     metric_key='mean_moving_average_scores',
     std_metric_key='std_moving_average_scores',
     title='Comparison of Mean Moving Average Rewards (over last 100 episodes)',
     ylabel='Mean Moving Average Reward',
-    epsilon_episode_marker=epsilon_min_episode
+    epsilon_episode_marker=epsilon_min_episode,
+    save_filename='comparison_mean_moving_average_rewards.png'
 )
 
 # --- Plot 2: Mean Cumulative Rewards ---
@@ -61,5 +68,6 @@ create_comparison_plot(
     std_metric_key='std_cumulative_rewards',
     title='Comparison of Mean Cumulative Rewards',
     ylabel='Mean Cumulative Reward',
-    epsilon_episode_marker=epsilon_min_episode
+    epsilon_episode_marker=epsilon_min_episode,
+    save_filename='comparison_mean_cumulative_rewards.png'
 )
