@@ -15,30 +15,27 @@ class QNetwork(nn.Module): #QNetwork rename
         self.n_actions = n_actions
 
         self.conv1 = nn.Conv2d(input_dims[2], 32, kernel_size=8, stride=4) 
+        # Input 84x84 -> Output (84-8)/4+1 = 20x20. Shape: (batch, 32, 20, 20)
 
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        # Input 20x20 -> Output (20-4)/2+1 = 9x9. Shape: (batch, 64, 9, 9)
 
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+        # Input 9x9 -> Output (9-3)/1+1 = 7x7. Shape: (batch, 64, 7, 7)
 
-        # Flatten the output of conv3 to feed into fully connected layers
+
         # Calculate the flattened size: 64 * 7 * 7
         self.fc1_dims = 64 * 7 * 7
+
+        # Fully connected layers
         self.fc1 = nn.Linear(self.fc1_dims, 512)
         self.fc2 = nn.Linear(512, self.n_actions)
-        """!
-        Initialize a neural network. This network can be used to approximate
-        some functions, maybe the reward function? Keep in mind that this class
-        should only be used to define the neural network, not to train it using
-        reinforcement learning algorithms.
-        """
-
+       
 
     def forward(
         self, state: np.ndarray
     ) -> torch.Tensor:
-        """!
-        Convert the input state to the relevant output using the neural network.
-        """
+    
         x = state.permute(0, 3, 1, 2)
 
         x = F.relu(self.conv1(x))
@@ -53,13 +50,13 @@ class QNetwork(nn.Module): #QNetwork rename
 
         return q_values
 
-class SmallerNeuralNetwork(nn.Module): #smaller QNetwork rename
+class SmallQNetwork(nn.Module): #smaller QNetwork rename
     def __init__(
         self,
         input_dims: Tuple[int, int, int], # (H, W, C) e.g., (84, 84, 4)
         n_actions: int
     ):
-        super(SmallerNeuralNetwork, self).__init__()
+        super(SmallQNetwork, self).__init__()
         self.input_dims = input_dims
         self.n_actions = n_actions
 
@@ -72,11 +69,10 @@ class SmallerNeuralNetwork(nn.Module): #smaller QNetwork rename
         self.conv2 = nn.Conv2d(16, 32, kernel_size=4, stride=2)
         # Input 20x20 -> Output (20-4)/2+1 = 9x9. Shape: (batch, 32, 9, 9)
 
-        # Calculate the flattened size after conv layers
         self.fc1_dims = 32 * 9 * 9 # 32 filters * 9 height * 9 width = 2592
 
-        self.fc1 = nn.Linear(self.fc1_dims, 128) # Reduced from 512 to 128
-        self.fc2 = nn.Linear(128, self.n_actions)
+        self.fc1 = nn.Linear(self.fc1_dims, 128) # Reduced to 128
+        self.fc2 = nn.Linear(128, self.n_actions) # Output layer of n_actions
 
     def forward(self, state: torch.Tensor) -> torch.Tensor: 
 
