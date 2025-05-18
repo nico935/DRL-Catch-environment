@@ -3,49 +3,25 @@ from agent import DQNAgent, DDQNAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from network import NeuralNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork # <--- Import both network classes
+from network import QNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork , VNetwork
 import math
 import os 
 import json 
 import argparse
 import time
+
 NETWORK_CLASSES = {
-    "NeuralNetwork": NeuralNetwork,
+    "QNetwork": QNetwork,
     "SmallerNeuralNetwork": SmallerNeuralNetwork,
-    "DuelingNeuralNetwork": DuelingNeuralNetwork
+    "DuelingNeuralNetwork": DuelingNeuralNetwork,
+    "ValueNetwork": VNetwork,  
 }
 
-
-# #setup the agent type
-# DDQN=False
-# DQN=True
-
-# #setup the architecture type
-# DuelingDQN=True
-# USE_SMALL_NN=False
-
-
-# if DDQN:
-#     AGENT_TYPE = "DDQN"
-#     if USE_SMALL_NN:
-#         network_class = SmallerNeuralNetwork
-#         print(f"Using network: {network_class} for {AGENT_TYPE}")
-#     else:
-#         network_class = NeuralNetwork
-#         print(f"Using network: {network_class} for {AGENT_TYPE}")
-
-
-# elif DQN:
-#     AGENT_TYPE = "DQN"
-#     if USE_SMALL_NN:
-#         network_class = SmallerNeuralNetwork
-#         print(f"Using network: {network_class} for {AGENT_TYPE}")
-#     elif DuelingDQN:
-#         network_class = DuelingNeuralNetwork
-#         print(f"Using network: {network_class} for {AGENT_TYPE}")
-#     else:
-#         network_class = NeuralNetwork
-#         print(f"Using network: {network_class} for {AGENT_TYPE}")
+AGENT_NETWORK_ARGS = {
+    "DQV": ["q_network_class", "v_network_class"],
+    "DQN": ["network_class"],
+    "DDQN": ["network_class"]
+}
 
 
 def load_config(config_path):
@@ -73,21 +49,51 @@ def run_environment(seed_value, config,agent_class, network_class):
     state_dimensions = env.observation_space.shape
     n_actions = env.action_space.n
 
-    agent_params = config["common_agent_params"].copy()
-    if config["agent_type"] == "DDQN" and "ddqn_specific_params" in config:
-        agent_params.update(config["ddqn_specific_params"])
+    agent_params = config.copy()
+    
+    for arg_name in AGENT_NETWORK_ARGS[config["agent_type"]]:
+        network_args[arg_name] = NETWORK_CLASSES[config[arch_key]]
 
+    for key in network_args:
+        agent_params.pop(key, None)
+        
     agent = agent_class(
         state_dimensions=state_dimensions,
         n_actions=n_actions,
-        network_class=network_class,
-        **agent_params 
+        **network_args,
+        **agent_params
     )
+    # if config["agent_type"] == "DQV":
+    #     q_network_class = NETWORK_CLASSES[config["q_network_architecture"]]
+    #     v_network_class = NETWORK_CLASSES[config["v_network_architecture"]]
+    #     agent = DQVAgent(
+    #         state_dimensions=state_dimensions,
+    #         n_actions=n_actions,
+    #         q_network_class=q_network_class,
+    #         v_network_class=v_network_class,
+    #         **agent_params
+    #     )
+    # else:
+    #     network_class = NETWORK_CLASSES[config["network_architecture"]]
+    #     agent = agent_class(
+    #         state_dimensions=state_dimensions,
+    #         n_actions=n_actions,
+    #         network_class=network_class,
+    #         **agent_params
+    #     )
+    # agent = agent_class(
+    #     state_dimensions=state_dimensions,
+    #     n_actions=n_actions,
+    #     network_class=network_class,
+    #     **agent_params 
+    # )
 
     print(f"--- Running Training for Seed: {seed_value} ---")
     print(f"Agent type: {config['agent_type']}")
-    print(f"Network type: {config['network_architecture']}")
-    print(f"Episodes: {config['n_episodes']}")
+    if config["agent_type"] == "DQV":
+        print(f"Q-Network: {config['q_network_class']}, V-Network: {config['v_network_class']}")
+    else:
+        print(f"Network type: {config['network_class']}")    print(f"Episodes: {config['n_episodes']}")
     print(f"Learning rate: {agent.lr}") 
     print(f"Using device: {agent.device}") 
     print(f"State dimensions: {state_dimensions}")
@@ -142,14 +148,17 @@ def run_environment(seed_value, config,agent_class, network_class):
         "epsilon_history": eps_history 
     }
 
-    filename = f"results_seed_{seed_value}_{config['agent_type']}_{config['network_architecture']}_{run_timestamp}.json"
-    filepath = os.path.join(EXPERIMENT_RESULTS_DIR, filename)
+    if config["agent_type"] == "DQV":
+        net_name = f"{config['q_network_class']}_{config['v_network_class']}"
+    else:
+        net_name = config["network_class"]
+    filename = f"results_seed_{seed_value}_{config['agent_type']}_{net_name}_{run_timestamp}.json"    filepath = os.path.join(EXPERIMENT_RESULTS_DIR, filename)
 
     if not os.path.exists(EXPERIMENT_RESULTS_DIR):
         os.makedirs(EXPERIMENT_RESULTS_DIR)
 
     with open(filepath, 'w') as f:
-        json.dump(result_data, f, indent=4) # Use indent for readability
+        json.dump(result_data, f, indent=4) 
     print(f"Results for seed {seed_value} saved to {filepath}")
 
     return result_data
@@ -178,7 +187,7 @@ if __name__ == "__main__":
     denominator = math.log(epsilon_decay)
     num_decay = math.ceil(numerator / denominator)
     constant_epsilon_episode = math.ceil((num_decay+burn_in_period_steps)/ AVG_STEPS_PER_EPISODE)
-    print(f"Calculated: number of episodes till min epsilon reached: {constant_epsilon_episode}") # Optional
+    print(f"Calculated: number of episodes till min epsilon reached: {constant_epsilon_episode}") 
 
     # --- Determine Agent and Network Class from Config ---
     if config["agent_type"] == "DQN":
@@ -192,21 +201,21 @@ if __name__ == "__main__":
     if network_class is None:
         raise ValueError(f"Unknown network_architecture: {config['network_architecture']}")
 
-    # print(f"Selected Agent: {agent_class.__name__}, Network: {network_class.__name__}") # Optional
+    print(f"Selected Agent: {agent_class.__name__}, Network: {network_class.__name__}") 
 
     N_EPISODES = config['n_episodes']
     SEEDS = config['seeds']
 
     # --- Run the Environment for each seed ---
-    experiment_start_time = time.time()
+    start_time = time.time()
     all_experiment_runs_data = []  
     for seed in SEEDS:
         result_from_seed = run_environment(seed, config, agent_class, network_class)
         all_experiment_runs_data.append(result_from_seed)
-    # print(f"Total run time: {time.time() - experiment_start_time:.2f}s") # Optional
+    end_time = time.time()
+    print(f"Total run time: {end_time- start_time:.2f}s")
 
-    # --- Process and Plot Results ---
-    # Assuming all_experiment_runs_data is not empty and data is uniform
+    # --- Process Results ---
     EXPERIMENT_RESULTS_DIR = f"/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/{config['experiment_name']}"
     if not os.path.exists(EXPERIMENT_RESULTS_DIR):
         os.makedirs(EXPERIMENT_RESULTS_DIR)
@@ -216,23 +225,21 @@ if __name__ == "__main__":
     
     mean_ma_scores = np.mean(all_moving_averages, axis=0)
     std_ma_scores = np.std(all_moving_averages, axis=0)
-    episodes_axis = np.arange(1, N_EPISODES + 1) # Assumes all runs go for N_EPISODES
+    episodes_axis = np.arange(1, N_EPISODES + 1) 
 
     all_cumulative_rewards_list = [np.cumsum(scores) for scores in all_raw_scores]
-    # Simple approach: Assume all episodes run to N_EPISODES for cumulative reward mean
-    # If not, this np.mean will error or behave unexpectedly if inner lists have different lengths.
-    # For the "simpler code" request, we omit padding that was in previous versions.
+
     mean_cumulative_rewards = np.mean(all_cumulative_rewards_list, axis=0)
     std_cumulative_rewards = np.std(all_cumulative_rewards_list, axis=0)
  
 
- # --- Create Two Subplots ---
+ # --- Create Two Plots ---
     fig, axs = plt.subplots(2, 1, figsize=(12, 14), sharex=True) # 2 rows, 1 column, share x-axis
     experiment_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
-    # Subplot 1: Moving Average Reward
+    # Plot 1: Moving Average Reward
     color_ma = 'tab:blue'
-    axs[0].set_ylabel('Mean Average Reward')
+    axs[0].set_ylabel('Mean Average Reward (100 episodes)')
     axs[0].plot(episodes_axis, mean_ma_scores, color=color_ma, linestyle='-', label='Mean MA Reward')
     axs[0].fill_between(episodes_axis, mean_ma_scores - std_ma_scores, mean_ma_scores + std_ma_scores, alpha=0.2, color=color_ma)
     
@@ -243,12 +250,12 @@ if __name__ == "__main__":
     axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds')
     
     legend_elements_ma = [axs[0].get_lines()[0]] # Get the MA line
-    if line_eps_ma: # Add epsilon line to legend if plotted
+    if line_eps_ma: 
         legend_elements_ma.append(line_eps_ma)
     axs[0].legend(handles=legend_elements_ma, loc='best')
     axs[0].grid(True, linestyle='--')
 
-    # Subplot 2: Cumulative Reward
+    # Plot 2: Cumulative Reward
     color_cum = 'tab:red'
     axs[1].set_xlabel('Episode')
     axs[1].set_ylabel('Mean Cumulative Reward')
@@ -258,18 +265,17 @@ if __name__ == "__main__":
                        mean_cumulative_rewards + std_cumulative_rewards, 
                        alpha=0.2, color=color_cum)
 
-    line_eps_cum = None # Initialize for legend
+    line_eps_cum = None 
     if constant_epsilon_episode > 0 and constant_epsilon_episode <= N_EPISODES: # Check if within plot range
         line_eps_cum = axs[1].axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
     
-    # No title for the second subplot as the main title covers it, or add specific if desired.
-    legend_elements_cum = [axs[1].get_lines()[0]] # Get the Cumulative line
-    if line_eps_cum: # Add epsilon line to legend if plotted
+    legend_elements_cum = [axs[1].get_lines()[0]] # 
+    if line_eps_cum: 
         legend_elements_cum.append(line_eps_cum)
     axs[1].legend(handles=legend_elements_cum, loc='best')
     axs[1].grid(True, linestyle='--')
     
-    fig.tight_layout(rect=[0, 0.03, 1, 0.96]) # Adjust rect for main title and x-label space
+    fig.tight_layout(rect=[0, 0.03, 1, 0.96]) 
 
     plot_filename = f"plot_MA_Cum_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)

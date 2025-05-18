@@ -1,7 +1,7 @@
 {
     "experiment_name": "DQN_Big_network_Experiment1",
     "agent_type": "DQN",
-    "network_architecture": "NeuralNetwork",
+    "network_class": "QNetwork",
     "n_episodes": 4500,
     "seeds": [42, 123, 456, 789, 101112],
     "common_agent_params": {
@@ -14,9 +14,5 @@
         "learning_rate": 0.00025,
         "target_update_frequency": 2000,
         "burn_in_period": 7000
-    },
-    "dqn_specific_params": {
-        "t_weight_start": 0.005,
-        "soft_update": false
     }
 }
