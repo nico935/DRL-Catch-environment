@@ -225,7 +225,7 @@ class DDQNAgent(Agent):
 
 
         self.q_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)
-        self.q_target_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
+        self.q_target_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions) 
         self.q_target_network.eval() # Put target network in eval mode
 
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
@@ -289,11 +289,11 @@ class DDQNAgent(Agent):
         q_snext[terminal_batch] = 0.0 # Q-value of terminal state is 0
         q_actions_batch= torch.argmax(q_snext,dim=1) #argmax actions in next state
 
-        target_q_snext= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
-        target_q_snext[terminal_batch] = 0.0 
-
-        # action target for double dqn
-        q_action_target= target_q_snext.gather(1, q_actions_batch.unsqueeze(1)).squeeze(1) 
+        with torch.no_grad():
+            target_q_snext= self.q_target_network(new_states_batch) # shape (batch_size, n_actions)
+            target_q_snext[terminal_batch] = 0.0 
+            # action target for double dqn
+            q_action_target= target_q_snext.gather(1, q_actions_batch.unsqueeze(1)).squeeze(1) 
 
         target = rewards_batch + self.gamma*q_action_target # [0] to get values from (values, indices) tuple
 
