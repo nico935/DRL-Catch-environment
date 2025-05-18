@@ -1,5 +1,5 @@
 {
-    "experiment_name": "DDQN_Experiment1",
+    "experiment_name": "Duelling_DDQN_Experiment1",
     "agent_type": "DDQN",
     "q_network_class": "DuelingNeuralNetwork",
     "n_episodes": 4500,
