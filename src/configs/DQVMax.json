@@ -10,7 +10,7 @@
     "epsilon_start": 0.5,
     "epsilon_min": 0.001,
     "batch_size": 32,
-    "epsilon_decay": 0.9998,
+    "epsilon_decay": 0.999818,
     "learning_rate": 0.00025,
     "target_update_frequency": 200,
     "burn_in_period": 7000
