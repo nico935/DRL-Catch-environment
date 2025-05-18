@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from typing import Tuple
-from network import QNetwork,SmallQNetwork,VNetwork
+from network import QNetwork, SmallQNetwork , VNetwork
 
 class Agent():
     def __init__(
