@@ -155,7 +155,7 @@ class VNetwork(nn.Module):
         self.conv2 = nn.Conv2d(16, 32, kernel_size=4, stride=2)
         # Input 20x20 -> Output ((20-4)/2)+1 = 9x9. Shape: (batch, 32, 9, 9)
         self.conv_output_flat_size = 32 * 9 * 9  # 2592
-
+        
         self.fc_value = nn.Linear(self.conv_output_flat_size, 128) 
         self.value_output = nn.Linear(128, 1) 
 
@@ -163,9 +163,11 @@ class VNetwork(nn.Module):
         x = state.permute(0, 3, 1, 2) 
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.reshape(-1, self.fc1_dims) 
 
-        x = F.relu(self.fc_value(x))
-        value = self.value_output(x)
+        # Flatten the output from conv
+        x = torch.flatten(x, start_dim=1)
+
+        value = F.relu(self.fc_value(x))
+        value = self.value_output(value)  
+
         return value
