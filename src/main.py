@@ -17,12 +17,6 @@ NETWORK_CLASSES = {
     "ValueNetwork": VNetwork,  
 }
 
-AGENT_NETWORK_ARGS = {
-    "DQV": ["q_network_class", "v_network_class"],
-    "DQN": ["network_class"],
-    "DDQN": ["network_class"]
-}
-
 
 def load_config(config_path):
     with open(config_path, 'r') as f:
@@ -31,7 +25,7 @@ def load_config(config_path):
 
 
 
-def run_environment(seed_value, config,agent_class, network_class):  
+def run_environment(seed_value, config,agent_class):  
     import time
     run_timestamp = time.strftime("%Y%m%d_%H%M%S")
 
@@ -51,12 +45,15 @@ def run_environment(seed_value, config,agent_class, network_class):
 
     agent_params = config.copy()
     
-    for arg_name in AGENT_NETWORK_ARGS[config["agent_type"]]:
-        network_args[arg_name] = NETWORK_CLASSES[config[arch_key]]
+    network_args = {
+        key: NETWORK_CLASSES[config[key]]
+        for key in config
+        if key.endswith("_class")
+    }
 
     for key in network_args:
         agent_params.pop(key, None)
-        
+
     agent = agent_class(
         state_dimensions=state_dimensions,
         n_actions=n_actions,
@@ -197,11 +194,13 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown agent_type: {config['agent_type']}")
 
-    network_class = NETWORK_CLASSES.get(config["network_architecture"])
-    if network_class is None:
-        raise ValueError(f"Unknown network_architecture: {config['network_architecture']}")
+    if config["agent_type"] == "DQV":
+        net_name = f"{config['q_network_class']}_{config['v_network_class']}"
+    else:
+        net_name = config["network_class"]
 
-    print(f"Selected Agent: {agent_class.__name__}, Network: {network_class.__name__}") 
+
+    print(f"Selected Agent: {agent_class.__name__}, Network: {net_name}") 
 
     N_EPISODES = config['n_episodes']
     SEEDS = config['seeds']
@@ -210,7 +209,7 @@ if __name__ == "__main__":
     start_time = time.time()
     all_experiment_runs_data = []  
     for seed in SEEDS:
-        result_from_seed = run_environment(seed, config, agent_class, network_class)
+        result_from_seed = run_environment(seed, config, agent_class, net_name)
         all_experiment_runs_data.append(result_from_seed)
     end_time = time.time()
     print(f"Total run time: {end_time- start_time:.2f}s")
@@ -247,7 +246,7 @@ if __name__ == "__main__":
     if constant_epsilon_episode > 0 and constant_epsilon_episode <= N_EPISODES : # Check if within plot range
         line_eps_ma = axs[0].axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
     
-    axs[0].set_title(f'{config["agent_type"]} ({config["network_architecture"]}) - Avg over {len(SEEDS)} seeds')
+    axs[0].set_title(f'{config["agent_type"]} ({net_name}) - Avg over {len(SEEDS)} seeds')
     
     legend_elements_ma = [axs[0].get_lines()[0]] # Get the MA line
     if line_eps_ma: 
@@ -277,7 +276,7 @@ if __name__ == "__main__":
     
     fig.tight_layout(rect=[0, 0.03, 1, 0.96]) 
 
-    plot_filename = f"plot_MA_Cum_{config['agent_type']}_{config['network_architecture']}_{experiment_timestamp}.png"
+    plot_filename = f"plot_MA_Cum_{config['agent_type']}_{net_name}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
     plt.savefig(saved_plot_path, bbox_inches='tight')
     print(f"Plot saved to: {saved_plot_path}")
