@@ -256,9 +256,6 @@ if __name__ == "__main__":
     
     fig.tight_layout(rect=[0, 0.03, 1, 0.96]) 
 
-    for ax in axs:  
-    ax.xaxis.set_tick_params(labelbottom=True)
-
     plot_filename = f"plot_MA_Cum_{config['agent_type']}_{net_name}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
     plt.savefig(saved_plot_path, bbox_inches='tight')
