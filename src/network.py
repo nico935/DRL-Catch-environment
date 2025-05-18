@@ -171,3 +171,4 @@ class VNetwork(nn.Module):
         value = self.value_output(value)  
 
         return value
+

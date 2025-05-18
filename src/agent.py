@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from typing import Tuple
-from network import QNetwork,SmallerNeuralNetwork,VNetwork
+from network import QNetwork,SmallQNetwork,VNetwork
 
 class Agent():
     def __init__(
@@ -13,9 +13,6 @@ class Agent():
         memory_size: int,
         state_dimensions: Tuple[int, int, int],
         n_actions: int,
-        #do I need to put the parameters below of other agents here?
-        # Add any other arguments you need here
-        # e.g. learning rate, discount factor, etc.
     ) -> None:
         """!
         Initializes the agent.
@@ -34,7 +31,7 @@ class Agent():
         self.next_state_buffer = np.zeros((self.memory_size, *state_dimensions), dtype=np.float32)
         self.action_buffer = np.zeros(self.memory_size, dtype=np.int32)
         self.reward_buffer = np.zeros(self.memory_size, dtype=np.float32)
-        self.terminal_buffer = np.zeros(self.memory_size, dtype=bool)    #buffer for whether terminal (ball dropped to depth 17, should take 12 steps)
+        self.terminal_buffer = np.zeros(self.memory_size, dtype=bool)  
         self.mem_counter = 0
         self.n_actions = n_actions
 
@@ -42,7 +39,7 @@ class Agent():
     def store_transition(
         self,
         state: np.ndarray,
-        action: int, # Is this always an int? 
+        action: int,  
         reward: float,
         new_state: np.ndarray,
         done: bool
@@ -73,7 +70,7 @@ class Agent():
     def choose_action(
         self,
         observation: np.ndarray
-    ) -> int: # Is this always an int?
+    ) -> int: 
         """!
         Abstract method that should be implemented by the child class, e.g. DQN or DDQN agents.
         This method should contain the full logic needed to choose an action based on the current state.
@@ -385,8 +382,8 @@ class DQVAgent(Agent):
         new_states_batch = torch.tensor(self.next_state_buffer[batch_indices], dtype=torch.float32).to(self.device)
         terminal_batch = torch.tensor(self.terminal_buffer[batch_indices], dtype=torch.bool).to(self.device)
 
-        # Calculate TD target for both V and Q networks (y_t^DQV)
-        # y_t^DQV = r_t + gamma * V(s_{t+1}; Phi^-)
+        # Calculate TD target for both V and Q networks 
+        # target^DQV = r_t + gamma * V(s_{t+1}; Phi^-)
         with torch.no_grad():
             v_s_next_target = self.target_v_network(new_states_batch).squeeze()
             v_s_next_target[terminal_batch] = 0.0
@@ -409,5 +406,104 @@ class DQVAgent(Agent):
 
         if self.learn_step_counter % self.target_update_frequency == 0:
             self.target_v_network.load_state_dict(self.v_network.state_dict()) 
+
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+class DQVMaxAgent(Agent):
+    def __init__(
+        self,
+        memory_size: int,
+        state_dimensions: Tuple[int, int, int],
+        n_actions: int,
+        q_network_class, 
+        v_network_class, 
+        **kwargs
+    ):
+        super(DQVMaxAgent, self).__init__(memory_size, state_dimensions, n_actions)
+        self.lr = kwargs.get("learning_rate", 0.00025) 
+        self.gamma = kwargs.get("gamma", 0.99)
+        self.epsilon = kwargs.get("epsilon_start", 0.5) 
+        self.epsilon_min = kwargs.get("epsilon_min", 0.001) 
+        self.epsilon_decay = kwargs.get("epsilon_decay", 0.9998)
+        self.batch_size = kwargs.get("batch_size", 32)
+        self.target_update_frequency = kwargs.get("target_update_frequency", 200) 
+        self.burn_in_period = kwargs.get("burn_in_period", 7000) 
+
+        self.learn_step_counter = 0
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # Initialize Q-Network and Target Q-Network
+        self.q_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions).to(self.device)
+        self.target_q_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions).to(self.device)
+        self.target_q_network.load_state_dict(self.q_network.state_dict())
+        self.target_q_network.eval() # Target network is only for inference
+
+        # Initialize V-Network
+        self.v_network = v_network_class(input_dims=state_dimensions).to(self.device)
+
+
+        self.q_optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
+        self.v_optimizer = optim.Adam(self.v_network.parameters(), lr=self.lr)
+        self.loss_fn = nn.MSELoss()
+
+
+    def choose_action(self, observation: np.ndarray) -> int:
+        if np.random.rand() <= self.epsilon:
+            return np.random.choice(self.n_actions)
+        else:
+            state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(self.device)
+            self.q_network.eval() 
+            with torch.no_grad():
+                q_values = self.q_network(state)
+            self.q_network.train() 
+            return torch.argmax(q_values).item()
+
+    def learn(self) -> None:
+        if self.mem_counter < self.burn_in_period: 
+            return
+
+        self.q_optimizer.zero_grad()
+        self.v_optimizer.zero_grad()
+
+        max_mem = min(self.mem_counter, self.memory_size)
+        batch_indices = np.random.choice(max_mem, self.batch_size, replace=False)
+
+        states_batch = torch.tensor(self.state_buffer[batch_indices], dtype=torch.float32).to(self.device)
+        actions_batch = torch.tensor(self.action_buffer[batch_indices], dtype=torch.long).to(self.device)
+        rewards_batch = torch.tensor(self.reward_buffer[batch_indices], dtype=torch.float32).to(self.device)
+        new_states_batch = torch.tensor(self.next_state_buffer[batch_indices], dtype=torch.float32).to(self.device)
+        terminal_batch = torch.tensor(self.terminal_buffer[batch_indices], dtype=torch.bool).to(self.device)
+
+        # --- Update V-Network ---
+        # Target for V-network = r_t + gamma * max_a' Q(s_{t+1}, a'; theta^-)
+        with torch.no_grad():
+            q_next_target = self.target_q_network(new_states_batch) 
+            max_q_next_target = torch.max(q_next_target, dim=1)[0]
+            max_q_next_target[terminal_batch] = 0.0 
+            v_target = rewards_batch + self.gamma * max_q_next_target
+        
+        v_s = self.v_network(states_batch).squeeze() 
+        v_loss = self.loss_fn(v_target, v_s)
+        v_loss.backward() 
+        self.v_optimizer.step() 
+
+        # --- Update Q-Network ---
+        # Target for Q-network = r_t + gamma * V(s_{t+1}; Phi)
+        with torch.no_grad():
+            v_s_next = self.v_network(new_states_batch).squeeze() 
+            v_s_next[terminal_batch] = 0.0 
+            q_target = rewards_batch + self.gamma * v_s_next
+        
+        q_s = self.q_network(states_batch) 
+        q_action_taken = q_s.gather(1, actions_batch.unsqueeze(-1)).squeeze(-1) 
+        q_loss = self.loss_fn(q_target, q_action_taken)
+        q_loss.backward() 
+        self.q_optimizer.step() 
+
+        self.learn_step_counter += 1
+
+        if self.learn_step_counter % self.target_update_frequency == 0:
+            self.target_q_network.load_state_dict(self.q_network.state_dict())
 
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)

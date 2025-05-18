@@ -3,7 +3,7 @@ from agent import DQNAgent, DDQNAgent, DQVAgent
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from network import QNetwork, SmallerNeuralNetwork, DuelingNeuralNetwork , VNetwork
+from network import QNetwork, SmallQNetwork, DuelingNeuralNetwork , VNetwork
 import math
 import os 
 import json 
@@ -22,7 +22,7 @@ def run_environment(seed_value, config,agent_class,network_args):
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
 
-    #Set deterministic torch calculations, slightly slows down training
+    #Make sure torch calculation are deterministic, slightly slows down training
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed_value) 
         torch.backends.cudnn.deterministic = True
@@ -34,40 +34,13 @@ def run_environment(seed_value, config,agent_class,network_args):
 
     agent_params = config.copy()
 
-    for key in network_args:
-        agent_params.pop(key, None)
-
     agent = agent_class(
         state_dimensions=state_dimensions,
         n_actions=n_actions,
         **network_args,
         **agent_params
     )
-    # if config["agent_type"] == "DQV":
-    #     q_network_class = NETWORK_CLASSES[config["q_network_architecture"]]
-    #     v_network_class = NETWORK_CLASSES[config["v_network_architecture"]]
-    #     agent = DQVAgent(
-    #         state_dimensions=state_dimensions,
-    #         n_actions=n_actions,
-    #         q_network_class=q_network_class,
-    #         v_network_class=v_network_class,
-    #         **agent_params
-    #     )
-    # else:
-    #     network_class = NETWORK_CLASSES[config["network_architecture"]]
-    #     agent = agent_class(
-    #         state_dimensions=state_dimensions,
-    #         n_actions=n_actions,
-    #         network_class=network_class,
-    #         **agent_params
-    #     )
-    # agent = agent_class(
-    #     state_dimensions=state_dimensions,
-    #     n_actions=n_actions,
-    #     network_class=network_class,
-    #     **agent_params 
-    # )
-
+   
     print(f"--- Running Training for Seed: {seed_value} ---")
     print(f"Agent type: {config['agent_type']}")
     print(f"Learning rate: {agent.lr}") 
@@ -113,7 +86,7 @@ def run_environment(seed_value, config,agent_class,network_args):
             run_avg_score = np.mean(current_run_score)
         current_run_moving_average.append(run_avg_score)
         if (ep + 1) % 50 == 0:
-            print(f"episode {ep} | score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
+            print(f"score: {score:.2f} | mov avg reward: {run_avg_score:.2f} | avg reward {avg_score:.2f} epsilon: {agent.epsilon:.2f} | steps: {agent.mem_counter}")
 
     result_data = {
         "seed": seed_value,
@@ -134,7 +107,7 @@ if __name__ == "__main__":
 
     # --- Load Configuration ---
     config = load_config(args.config_file)
-
+    print(f"Configuration: {config}")
 
     N_EPISODES = config['n_episodes']
     SEEDS = config['seeds']
@@ -145,24 +118,34 @@ if __name__ == "__main__":
 
     NETWORK_CLASSES = {
     "QNetwork": QNetwork,
-    "SmallerNeuralNetwork": SmallerNeuralNetwork,
+    "SmallQNetwork": SmallQNetwork,
     "DuelingNeuralNetwork": DuelingNeuralNetwork,
     "ValueNetwork": VNetwork,  
     }
 
     # --- Build network_args and net_name ---
+
+    # Extract network classes from config
     network_args = {
         key: NETWORK_CLASSES[config[key]]
         for key in config
         if key.endswith("_class")
     }
+    # We remove the keys in config to eliminate overlap with network_args
+    for key in network_args:
+        config.pop(key, None)
 
+    # Remove the "_class" suffix to assign a string name to network used
     net_name = "_".join([v.__name__ for v in network_args.values()])
+
+
+    # --- Define the agent class and agent name ---
 
     AGENT_CLASSES = {
         "DQN": DQNAgent,
         "DDQN": DDQNAgent,
-        "DQV": DQVAgent
+        "DQV": DQVAgent,
+        "DQVMax": DQVMaxAgent,
     }
 
     agent_class = AGENT_CLASSES.get(config["agent_type"])
@@ -171,6 +154,7 @@ if __name__ == "__main__":
 
     print(f"Selected Agent: {agent_class.__name__}, Network: {net_name}")
 
+
     # --- Calculate timestep where epsilon is constant ---
     epsilon_start = config["epsilon_start"]
     epsilon_decay = config["epsilon_decay"]
@@ -178,8 +162,6 @@ if __name__ == "__main__":
     
     burn_in_period_steps = config["burn_in_period"] 
     AVG_STEPS_PER_EPISODE = 11 # ball drops in 11 steps
-
-
 
     numerator = math.log(epsilon_min / epsilon_start)
     denominator = math.log(epsilon_decay)
@@ -197,7 +179,6 @@ if __name__ == "__main__":
     end_time = time.time()
     print(f"Total run time: {end_time- start_time:.2f}s")
 
-    
     all_moving_averages = [run_data['moving_average_scores'] for run_data in all_experiment_runs_data]
     all_raw_scores = [run_data['raw_scores'] for run_data in all_experiment_runs_data]
     
@@ -206,7 +187,6 @@ if __name__ == "__main__":
     episodes_axis = np.arange(1, N_EPISODES + 1) 
 
     all_cumulative_rewards_list = [np.cumsum(scores) for scores in all_raw_scores]
-
     mean_cumulative_rewards = np.mean(all_cumulative_rewards_list, axis=0)
     std_cumulative_rewards = np.std(all_cumulative_rewards_list, axis=0)
 
@@ -234,7 +214,8 @@ if __name__ == "__main__":
 
     # Plot 1: Moving Average Reward
     color_ma = 'tab:blue'
-    axs[0].set_ylabel('Mean Average Reward (100 episodes)')
+    axs[0].set_ylabel('Mean Average Reward (last min(t,100) episodes')
+    axs[0].set_xlabel('Episode')
     axs[0].plot(episodes_axis, mean_ma_scores, color=color_ma, linestyle='-', label='Mean MA Reward')
     axs[0].fill_between(episodes_axis, mean_ma_scores - std_ma_scores, mean_ma_scores + std_ma_scores, alpha=0.2, color=color_ma)
 
