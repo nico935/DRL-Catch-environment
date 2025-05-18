@@ -97,7 +97,7 @@ class DQNAgent(Agent):
         memory_size: int,
         state_dimensions: Tuple[int, int, int], # (height, width, fps)
         n_actions: int,
-        network_class,
+        q_network_class,        
         **kwargs
          ):
         super(DQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)
@@ -113,8 +113,8 @@ class DQNAgent(Agent):
         self.learn_step_counter = 0 # For target network updates
 
         # Input_dims for QNetwork is (84, 84, FPS) 
-        self.q_network = network_class(input_dims=state_dimensions, n_actions=n_actions)
-        self.q_target_network = network_class(input_dims=state_dimensions, n_actions=n_actions)  
+        self.q_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)
+        self.q_target_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)  
         self.q_target_network.load_state_dict(self.q_network.state_dict()) # Initialize target with eval weights with parameter tensor state_dict
         self.q_target_network.eval() # Put target network in eval mode
 
@@ -204,7 +204,7 @@ class DDQNAgent(Agent):
         memory_size: int,
         state_dimensions: Tuple[int, int, int], 
         n_actions: int,
-        network_class,
+        q_network_class,
         t_weight_start: float = 0.2,
         soft_update: bool = True,  #whether to use soft update or hard update
         **kwargs 
@@ -224,8 +224,8 @@ class DDQNAgent(Agent):
         self.soft_update = soft_update
 
 
-        self.q_network = network_class(input_dims=state_dimensions, n_actions=n_actions)
-        self.q_target_network = network_class(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
+        self.q_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)
+        self.q_target_network = q_network_class(input_dims=state_dimensions, n_actions=n_actions)  #how de we make sure no grad?
         self.q_target_network.eval() # Put target network in eval mode
 
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.lr)
