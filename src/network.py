@@ -146,6 +146,10 @@ class DuelingNeuralNetwork(nn.Module):
 class VNetwork(nn.Module):
     def __init__(self, input_dims: Tuple[int, int, int]): # (H, W, C)
         super(VNetwork, self).__init__()
+        self.input_dims = input_dims 
+
+        in_channels = self.input_dims[2]
+
         
         self.conv1 = nn.Conv2d(in_channels, 16, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=4, stride=2)
