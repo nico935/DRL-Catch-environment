@@ -18,9 +18,9 @@ experiment_files = {
 epsilon_min_episode = 3491
 
 # --- Function to create a plot ---
-def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker,save_filename=None):
+def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker, save_filename=None):
     plt.figure(figsize=(15, 10))
-    plot_handles = [] # For custom legend including axvline
+    plot_handles = []
 
     for display_name, file_path in experiment_files.items():
         with open(file_path, 'r') as f:
@@ -44,14 +44,14 @@ def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_ep
     plt.legend(handles=plot_handles, loc='best')
     plt.grid(True, linestyle='--')
     plt.tight_layout()
-    plt.show()
 
     if save_filename is not None:
-            save_path = os.path.join(base_drive_path, save_filename)
-            plt.savefig(save_path, bbox_inches='tight')
-            print(f"Plot saved to: {save_path}")
+        save_path = os.path.join(base_drive_path, save_filename)
+        plt.savefig(save_path, bbox_inches='tight')
+        print(f"Plot saved to: {save_path}")
 
     plt.show()
+
 # --- Plot 1: Mean Moving Average Scores ---
 create_comparison_plot(
     metric_key='mean_moving_average_scores',
