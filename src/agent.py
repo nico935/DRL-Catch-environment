@@ -370,7 +370,7 @@ class DQVAgent(Agent):
             return torch.argmax(q_values).item()
 
     def learn(self) -> None:
-        if self.mem_counter < self.burn_in_period 
+        if self.mem_counter < self.burn_in_period;
             return
 
         self.q_optimizer.zero_grad()
