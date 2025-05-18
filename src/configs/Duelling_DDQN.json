@@ -1,0 +1,16 @@
+{
+    "experiment_name": "DDQN_Experiment1",
+    "agent_type": "DDQN",
+    "q_network_class": "DuelingNeuralNetwork",
+    "n_episodes": 4500,
+    "seeds": [42, 123, 456, 789, 101112],
+    "memory_size": 20000,
+    "gamma": 0.99,
+    "epsilon_start": 1.0,
+    "epsilon_min": 0.001,
+    "batch_size": 32,
+    "epsilon_decay": 0.99978,
+    "learning_rate": 0.00025,
+    "target_update_frequency": 200,
+    "burn_in_period": 7000
+}

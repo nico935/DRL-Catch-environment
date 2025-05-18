@@ -116,6 +116,9 @@ if __name__ == "__main__":
     if not os.path.exists(EXPERIMENT_RESULTS_DIR):
         os.makedirs(EXPERIMENT_RESULTS_DIR)
 
+
+    # --- Build network_args and net_name ---
+
     NETWORK_CLASSES = {
     "QNetwork": QNetwork,
     "SmallQNetwork": SmallQNetwork,
@@ -123,9 +126,7 @@ if __name__ == "__main__":
     "ValueNetwork": VNetwork,  
     }
 
-    # --- Build network_args and net_name ---
-
-    # Extract network classes from config
+    # Extract network classes from config, will then be passed to the agent
     network_args = {
         key: NETWORK_CLASSES[config[key]]
         for key in config
@@ -174,6 +175,7 @@ if __name__ == "__main__":
     start_time = time.time()
     all_experiment_runs_data = []  
     for seed in SEEDS:
+        # we pass network_args, and agent_class to the agent class
         result_from_seed = run_environment(seed, config, agent_class,network_args)
         all_experiment_runs_data.append(result_from_seed)
     end_time = time.time()
