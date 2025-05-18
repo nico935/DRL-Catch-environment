@@ -2,7 +2,7 @@
     "experiment_name": "DQV_network_Experiment1",
     "agent_type": "DQV",
     "q_network_class": "QNetwork", 
-    "v_network_class": "VNetwork", 
+    "v_network_class": "ValueNetwork", 
     "n_episodes": 4500,
     "seeds": [42, 123, 456, 789, 101112],
     "memory_size": 10000,
