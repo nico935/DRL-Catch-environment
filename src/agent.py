@@ -206,7 +206,7 @@ class DDQNAgent(Agent):
         n_actions: int,
         q_network_class,
         t_weight_start: float = 0.2,
-        soft_update: bool = True,  #whether to use soft update or hard update
+        soft_update: bool = False,  #whether to use soft update or hard update
         **kwargs 
         ):
         super(DDQNAgent, self).__init__(memory_size, state_dimensions,  n_actions)

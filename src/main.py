@@ -225,7 +225,7 @@ if __name__ == "__main__":
         line_eps_ma = axs[0].axvline(constant_epsilon_episode, color='tab:green', linestyle=':', linewidth=2, label=f'Epsilon Min at Ep ~{constant_epsilon_episode}')
     
     # Set title
-    axs[0].set_title(f'{config["agent_type"]} ({net_name}) - Avg over {len(SEEDS)} seeds')
+    axs[0].set_title(f'{config["agent_type"]} Moving average Reward (Top) and Cumulative Reward (Bottom) - Averaged over {len(SEEDS)} seeds')
     
     # Set legend
     legend_elements_ma = [axs[0].get_lines()[0]]
@@ -255,6 +255,9 @@ if __name__ == "__main__":
     axs[1].grid(True, linestyle='--')
     
     fig.tight_layout(rect=[0, 0.03, 1, 0.96]) 
+
+    for ax in axs:  
+    ax.xaxis.set_tick_params(labelbottom=True)
 
     plot_filename = f"plot_MA_Cum_{config['agent_type']}_{net_name}_{experiment_timestamp}.png"
     saved_plot_path = os.path.join(EXPERIMENT_RESULTS_DIR, plot_filename)
