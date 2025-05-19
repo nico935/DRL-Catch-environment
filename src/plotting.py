@@ -18,7 +18,7 @@ experiment_files = {
 epsilon_min_episode = 3491
 
 # --- Function to create a plot ---
-def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker, save_filename=a):
+def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_episode_marker, save_filename=None):
     plt.figure(figsize=(15, 10))
     plot_handles = []
 
