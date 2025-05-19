@@ -5,8 +5,8 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+#local google drive path with results saved
 base_drive_path = "/content/drive/MyDrive/Courses Groning/Deep Reinforcement Learning/Assignent 1/"
-#local google drive path
 experiment_files = {
     "DQN (SmallQNetwork)": os.path.join(base_drive_path, "DQN_Small_network_Experiment1/results_DQN_SmallQNetwork.json"),
     "DDQN (SmallQNetwork)": os.path.join(base_drive_path, "DDQN_Experiment1/results_DDQN_SmallQNetwork.json"),
@@ -41,6 +41,9 @@ def create_comparison_plot(metric_key, std_metric_key, title, ylabel, epsilon_ep
     plt.title(title)
     plt.ylabel(ylabel)
     plt.xlabel('Episode')
+    if plot_handles:
+        plt.legend(handles=plot_handles, loc='best')
+
     plt.grid(True, linestyle='--')
     plt.tight_layout()
 
