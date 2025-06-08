@@ -1,20 +1,21 @@
 
 # Value-based RL Algorithms in Catch Environment
 
-This repository implements several value-based reinforcement learning (RL) algorithms to solve the classic Catch game, a simple grid-world environment. 
+This repository implements several value-based reinforcement learning (RL) algorithms to solve the Catch game, a simple grid-world environment. 
 
 ## Algorithms Implemented
 
 The following value-based RL algorithms are implemented:
 
-- **DQN (Deep Q-Network)**
-  - Standard Q-learning with a neural network function approximator and target network.
-- **DDQN (Double Deep Q-Network)**
-  - Addresses Q-value overestimation in DQN by decoupling action selection and evaluation.
-- **DQV (Deep QV-Learning)**
-  - Learns both Q-value and Value functions simultaneously for improved stability.
-- **DQV-Max**
-  - A variant of DQV that further stabilizes value estimation using a max operator.
+• **Deep Q-Learning (DQN)** (Mnih et al., 2015)
+• **Double Deep Q-Learning** (DDQN) (Hasselt et al.,
+2016)
+• **Dueling Network Architectures** for DRL (Dueling
+DQN) (Wang et al., 2016)
+• **Deep Quality-Value** (DQV) Learning (Sabatelli et al.,
+2020)
+• **Deep Quality-Value Max** (DQV-Max) Learning
+(Sabatelli et al., 2020)
 
 Each agent is implemented as a class in `src/agent.py`, inheriting from a common abstract base.
 
@@ -48,3 +49,13 @@ The Catch game is implemented in `src/environment.py` as a subclass of OpenAI Gy
    ```bash
    python src/main.py
    ```
+
+## References
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., ... & Hassabis, D. (2015). Human-level control through deep reinforcement learning. nature, 518(7540), 529-533.
+
+Van Hasselt, H., Guez, A., & Silver, D. (2016, March). Deep reinforcement learning with double q-learning. In Proceedings of the AAAI conference on artificial intelligence (Vol. 30, No. 1).
+
+Wang, Z., Schaul, T., Hessel, M., Hasselt, H., Lanctot, M., & Freitas, N. (2016, June). Dueling network architectures for deep reinforcement learning. In International conference on machine learning (pp. 1995-2003). PMLR.
+
+Sabatelli, M., Louppe, G., Geurts, P., & Wiering, M. A. (2020, July). The deep quality-value family of deep reinforcement learning algorithms. In 2020 International Joint Conference on Neural Networks (IJCNN) (pp. 1-8). IEEE.
