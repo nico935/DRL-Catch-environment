@@ -24,15 +24,15 @@ The Catch game is implemented in `src/environment.py` as a subclass of OpenAI Gy
 
 - A 21x21 grid world.
 - Paddle controlled by the agent at the bottom; ball falls from the top.
-- Discrete action space: move left, move right, or stay.
 - The agent must catch the falling ball with the paddle to receive rewards.
-- The observation consists of stacked frames for temporal context (shape: 84x84x4).
+- Discrete action space: move left, move right, or stay.
+- The observation state consists of the last 4 frames augmented  (shape: 84x84x4).
 
 ## Project Structure
 
 - `src/agent.py` - RL agent classes (DQN, DDQN, DQV, DQV-Max).
-- `src/environment.py` - Catch environment definition.
-- `src/network.py` - Neural network models for Q and Value functions.
+- `src/environment.py` - Catch environment.
+- `src/network.py` - Neural network for Q and Value functions.
 - `src/main.py` - Training and evaluation scripts.
 - `src/plotting.py` - Plotting utilities for results and training curves.
 - `src/configs/` - Configuration files for experiments.
