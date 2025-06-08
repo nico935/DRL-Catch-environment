@@ -8,14 +8,10 @@ This repository implements several value-based reinforcement learning (RL) algor
 The following value-based RL algorithms are implemented:
 
 - **Deep Q-Learning (DQN)** (Mnih et al., 2015)
-- **Double Deep Q-Learning** (DDQN) (Hasselt et al.,
-2016)
-- **Dueling Network Architectures** for DRL (Dueling
-DQN) (Wang et al., 2016)
-- **Deep Quality-Value** (DQV) Learning (Sabatelli et al.,
-2020)
-- **Deep Quality-Value Max** (DQV-Max) Learning
-(Sabatelli et al., 2020)
+- **Double Deep Q-Learning** (Hasselt et al.,2016)
+- **Dueling Network Architectures**  (Wang et al., 2016)
+- **Deep Quality-Value** (Sabatelli et al.,2020)
+- **Deep Quality-Value Max** Learning (Sabatelli et al., 2020)
 
 Each agent is implemented as a class in `src/agent.py`, inheriting from a common abstract base.
 
